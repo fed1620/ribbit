@@ -1,6 +1,12 @@
 <resources>
-    <string name="app_name">ByteWrite</string>
 
-    <string name="hello_world">Hello world!</string>
+    <!-- Main Activity -->
+    <string name="app_name">ByteWrite</string>
     <string name="action_settings">Settings</string>
+    <string name="image_desc">image which is to be processed for OCR</string>
+    <string name="cameraButton">Launch Camera</string>
+    <string name="welcomeMessage">Take a picture to get started!</string>
+    <string name="confirmationMessage">Would you like to use this picture?</string>
+    <string name="yesButton">Yes</string>
+    <string name="noButton">No</string>
 </resources>
