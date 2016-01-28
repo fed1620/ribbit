@@ -20,46 +20,41 @@
         android:layout_height="wrap_content"
         android:text="@string/cameraButton"
         android:id="@+id/button"
+        android:layout_marginBottom="120dp"
+        android:width="150dp"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:textAppearance="?android:attr/textAppearanceLarge"
         android:text="@string/welcomeMessage"
         android:id="@+id/textView"
-        android:layout_alignTop="@+id/imageView"
-        android:layout_centerHorizontal="true" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="@string/confirmationMessage"
-        android:id="@+id/confirmation"
-        android:layout_above="@+id/button"
+        android:layout_below="@+id/imageView"
         android:layout_centerHorizontal="true"
-        android:layout_marginBottom="152dp" />
+        android:layout_marginTop="62dp" />
 
     <Button
-        android:onClick="no"
+        android:onClick="launchImageCaptureIntent"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/noButton"
-        android:id="@+id/no"
+        android:text="@string/retakeButton"
+        android:id="@+id/retakeButton"
+        android:width="150dp"
         android:layout_above="@+id/button"
-        android:layout_toLeftOf="@+id/imageView"
-        android:layout_toStartOf="@+id/imageView" />
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
 
     <Button
-        android:onClick="yes"
+        android:onClick="process"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/yesButton"
-        android:id="@+id/yes"
-        android:layout_alignTop="@+id/no"
-        android:layout_toRightOf="@+id/imageView"
-        android:layout_toEndOf="@+id/imageView" />
+        android:text="@string/processButton"
+        android:id="@+id/processButton"
+        android:width="150dp"
+        android:layout_alignTop="@+id/retakeButton"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true" />
 
 </RelativeLayout>

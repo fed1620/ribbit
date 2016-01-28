@@ -6,7 +6,6 @@
     <string name="image_desc">image which is to be processed for OCR</string>
     <string name="cameraButton">Launch Camera</string>
     <string name="welcomeMessage">Take a picture to get started!</string>
-    <string name="confirmationMessage">Would you like to use this picture?</string>
-    <string name="yesButton">Yes</string>
-    <string name="noButton">No</string>
+    <string name="processButton">Process</string>
+    <string name="retakeButton">Retake</string>
 </resources>

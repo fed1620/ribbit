@@ -18,12 +18,12 @@ public class MainActivity extends ActionBarActivity {
     private static final int REQUEST_IMAGE_CAPTURE = 1;
     private static final String MAIN_ACTIVITY = "MainActivity";  // Log tag
 
+    // Main Activity views
     private ImageView image;
-    private TextView instructions;
-    private TextView confirmation;
-    private Button yesButton;
-    private Button noButton;
-    private Button cameraButton;
+    private TextView  instructions;
+    private Button    yesButton;
+    private Button    noButton;
+    private Button    cameraButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,18 +33,20 @@ public class MainActivity extends ActionBarActivity {
         Log.i(MAIN_ACTIVITY, "onCreate() fired");
 
         // Get references to our views
+        image        = (ImageView)findViewById(R.id.imageView);
         cameraButton = (Button)findViewById(R.id.button);
-        yesButton = (Button)findViewById(R.id.yes);
-        noButton = (Button)findViewById(R.id.no);
+        yesButton    = (Button)findViewById(R.id.processButton);
+        noButton     = (Button)findViewById(R.id.retakeButton);
         instructions = (TextView)findViewById(R.id.textView);
-        confirmation = (TextView)findViewById(R.id.confirmation);
 
-        // Set the visibilities
+        // Visible views
         cameraButton.setVisibility(View.VISIBLE);
+        instructions.setVisibility(View.VISIBLE);
+
+        // Invisible views
+        image.setVisibility(View.INVISIBLE);
         yesButton.setVisibility(View.INVISIBLE);
         noButton.setVisibility(View.INVISIBLE);
-        instructions.setVisibility(View.VISIBLE);
-        confirmation.setVisibility(View.INVISIBLE);
     }
 
     @Override
@@ -101,10 +103,8 @@ public class MainActivity extends ActionBarActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        image = (ImageView)findViewById(R.id.imageView);
-        image.setVisibility(View.VISIBLE);
-
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
+            image.setVisibility(View.VISIBLE);
             Bundle extras = data.getExtras();
             Bitmap imageBitmap = (Bitmap) extras.get("data");
             image.setImageBitmap(imageBitmap);
@@ -122,53 +122,24 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
+    /**
+     * Prompt the user to either process or retake the picture
+     */
     private void confirm() {
-        // Get references to our views
-        cameraButton = (Button)findViewById(R.id.button);
-        yesButton = (Button)findViewById(R.id.yes);
-        noButton = (Button)findViewById(R.id.no);
-        instructions = (TextView)findViewById(R.id.textView);
-        confirmation = (TextView)findViewById(R.id.confirmation);
-
-        // Toggle visibility
-        cameraButton.setVisibility(View.INVISIBLE);
-        instructions.setVisibility(View.INVISIBLE);
+        // Visible views
         yesButton.setVisibility(View.VISIBLE);
         noButton.setVisibility(View.VISIBLE);
-        confirmation.setVisibility(View.VISIBLE);
+
+        // Invisible views
+        cameraButton.setVisibility(View.INVISIBLE);
+        instructions.setVisibility(View.INVISIBLE);
     }
 
-    public void yes(View view) {
-        // Get references to our views
-        cameraButton = (Button)findViewById(R.id.button);
-        yesButton = (Button)findViewById(R.id.yes);
-        noButton = (Button)findViewById(R.id.no);
-        instructions = (TextView)findViewById(R.id.textView);
-        confirmation = (TextView)findViewById(R.id.confirmation);
-
-        // Set the visibilities
+    public void process(View view) {
+        // Invisible views
         cameraButton.setVisibility(View.INVISIBLE);
         yesButton.setVisibility(View.INVISIBLE);
         noButton.setVisibility(View.INVISIBLE);
         instructions.setVisibility(View.INVISIBLE);
-        confirmation.setVisibility(View.INVISIBLE);
-    }
-
-    public void no(View view) {
-        // Get references to our views
-        image = (ImageView)findViewById(R.id.imageView);
-        cameraButton = (Button)findViewById(R.id.button);
-        yesButton = (Button)findViewById(R.id.yes);
-        noButton = (Button)findViewById(R.id.no);
-        instructions = (TextView)findViewById(R.id.textView);
-        confirmation = (TextView)findViewById(R.id.confirmation);
-
-        // Set the visibilities
-        image.setVisibility(View.INVISIBLE);
-        cameraButton.setVisibility(View.VISIBLE);
-        yesButton.setVisibility(View.INVISIBLE);
-        noButton.setVisibility(View.INVISIBLE);
-        instructions.setVisibility(View.VISIBLE);
-        confirmation.setVisibility(View.INVISIBLE);
     }
 }
