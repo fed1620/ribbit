@@ -24,7 +24,7 @@ public class ProcessActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_process);
-        retrieveImage();
+        loadImage();
     }
 
 
@@ -49,20 +49,15 @@ public class ProcessActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private void retrieveImage() {
-        // Get the intent
-        String imagePath = getIntent().getStringExtra("imagePath");
+    /**
+     * Load the bitmap from the device's storage
+     */
+    private void loadImage() {
+        // Load the bitmap
+        bitmap = Preprocessor.load(getIntent().getStringExtra("imagePath"));
 
-        // Get the bitmap image
-        File imageFile = new File(imagePath);
-
-        // Scale the image down to 1/4, and generate the bitmap
-        if (imageFile.exists()) {
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inSampleSize = 4;
-            bitmap = BitmapFactory.decodeFile(imageFile.getAbsolutePath(), options);
-            Log.i(PROCESS_ACTIVITY, "Scaled height: " + bitmap.getHeight() + " Scaled width: " + bitmap.getWidth());
-        }
+        // Convert it to greyscale
+        bitmap = Preprocessor.greyscale(bitmap);
 
         // Put it into the Image View
         image = (ImageView) findViewById(R.id.imageViewProcess);
