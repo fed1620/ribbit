@@ -2,6 +2,9 @@ package fedffm.bytewrite;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
@@ -13,16 +16,22 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 
 public class MainActivity extends ActionBarActivity {
     private static final int REQUEST_IMAGE_CAPTURE = 1;
     private static final String MAIN_ACTIVITY = "MainActivity";  // Log tag
 
     // Main Activity views
+    private String imagePath = "";
+    private Bitmap    bitmap;
     private ImageView image;
     private TextView  instructions;
-    private Button    yesButton;
-    private Button    noButton;
+    private Button processButton;
+    private Button retakeButton;
     private Button    cameraButton;
 
     @Override
@@ -35,8 +44,8 @@ public class MainActivity extends ActionBarActivity {
         // Get references to our views
         image        = (ImageView)findViewById(R.id.imageView);
         cameraButton = (Button)findViewById(R.id.button);
-        yesButton    = (Button)findViewById(R.id.processButton);
-        noButton     = (Button)findViewById(R.id.retakeButton);
+        processButton = (Button)findViewById(R.id.processButton);
+        retakeButton = (Button)findViewById(R.id.retakeButton);
         instructions = (TextView)findViewById(R.id.textView);
 
         // Visible views
@@ -45,8 +54,8 @@ public class MainActivity extends ActionBarActivity {
 
         // Invisible views
         image.setVisibility(View.INVISIBLE);
-        yesButton.setVisibility(View.INVISIBLE);
-        noButton.setVisibility(View.INVISIBLE);
+        processButton.setVisibility(View.INVISIBLE);
+        retakeButton.setVisibility(View.INVISIBLE);
     }
 
     @Override
@@ -104,10 +113,22 @@ public class MainActivity extends ActionBarActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
+
+            // Get the bitmap image
+            File imageFile = new File(imagePath);
+
+            if (imageFile.exists()) {
+                BitmapFactory.Options options = new BitmapFactory.Options();
+                options.inSampleSize = 4;
+
+                bitmap = BitmapFactory.decodeFile(imageFile.getAbsolutePath(), options);
+
+                Log.i(MAIN_ACTIVITY, "Scaled height: " + bitmap.getHeight() + " Scaled width: " + bitmap.getWidth());
+            }
+
+            // Put it into the Image View
+            image.setImageBitmap(bitmap);
             image.setVisibility(View.VISIBLE);
-            Bundle extras = data.getExtras();
-            Bitmap imageBitmap = (Bitmap) extras.get("data");
-            image.setImageBitmap(imageBitmap);
             confirm();
         }
     }
@@ -115,20 +136,29 @@ public class MainActivity extends ActionBarActivity {
     /**
      * Use the device's built in camera to capture an image
      */
-    public void launchImageCaptureIntent(View view) {
-        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-            startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
-        }
+    public void launchCamera(View view) {
+        // Create a file to store the image and get the directory/path
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String fileName = timeStamp + ".jpg";
+        File directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+        imagePath = directory.getAbsolutePath() + "/" + fileName;
+        File file = new File(imagePath);
+
+        // Start the camera intent
+        Uri outputFileUri = Uri.fromFile(file);
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri);
+        startActivityForResult(intent, REQUEST_IMAGE_CAPTURE);
     }
+
 
     /**
      * Prompt the user to either process or retake the picture
      */
     private void confirm() {
         // Visible views
-        yesButton.setVisibility(View.VISIBLE);
-        noButton.setVisibility(View.VISIBLE);
+        processButton.setVisibility(View.VISIBLE);
+        retakeButton.setVisibility(View.VISIBLE);
 
         // Invisible views
         cameraButton.setVisibility(View.INVISIBLE);
@@ -136,10 +166,9 @@ public class MainActivity extends ActionBarActivity {
     }
 
     public void process(View view) {
-        // Invisible views
-        cameraButton.setVisibility(View.INVISIBLE);
-        yesButton.setVisibility(View.INVISIBLE);
-        noButton.setVisibility(View.INVISIBLE);
-        instructions.setVisibility(View.INVISIBLE);
+        // Start a new intent
+        Intent intent = new Intent(this, ProcessActivity.class);
+        intent.putExtra("imagePath", imagePath);
+        startActivity(intent);
     }
 }

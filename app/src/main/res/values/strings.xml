@@ -8,4 +8,7 @@
     <string name="welcomeMessage">Take a picture to get started!</string>
     <string name="processButton">Process</string>
     <string name="retakeButton">Retake</string>
+    <string name="title_activity_process">Process</string>
+
+    <string name="hello_world">Hello world!</string>
 </resources>

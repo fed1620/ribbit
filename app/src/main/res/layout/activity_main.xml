@@ -11,18 +11,17 @@
         android:id="@+id/imageView"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="81dp"
+        android:layout_marginTop="5dp"
         android:contentDescription="@string/image_desc" />
 
     <Button
-        android:onClick="launchImageCaptureIntent"
+        android:onClick="launchCamera"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/cameraButton"
         android:id="@+id/button"
-        android:layout_marginBottom="120dp"
         android:width="150dp"
-        android:layout_alignParentBottom="true"
+        android:layout_centerVertical="true"
         android:layout_centerHorizontal="true" />
 
     <TextView
@@ -36,13 +35,13 @@
         android:layout_marginTop="62dp" />
 
     <Button
-        android:onClick="launchImageCaptureIntent"
+        android:onClick="launchCamera"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/retakeButton"
         android:id="@+id/retakeButton"
         android:width="150dp"
-        android:layout_above="@+id/button"
+        android:layout_alignParentBottom="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true" />
 
@@ -53,7 +52,7 @@
         android:text="@string/processButton"
         android:id="@+id/processButton"
         android:width="150dp"
-        android:layout_alignTop="@+id/retakeButton"
+        android:layout_alignParentBottom="true"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true" />
 
