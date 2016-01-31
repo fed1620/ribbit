@@ -59,6 +59,9 @@ public class ProcessActivity extends ActionBarActivity {
         // Convert it to greyscale
         bitmap = Preprocessor.greyscale(bitmap);
 
+        // Binarize it
+        bitmap = Preprocessor.binarize(bitmap);
+
         // Put it into the Image View
         image = (ImageView) findViewById(R.id.imageViewProcess);
         image.setImageBitmap(bitmap);

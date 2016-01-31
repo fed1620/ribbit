@@ -3,6 +3,7 @@ package fedffm.bytewrite;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
@@ -12,7 +13,7 @@ import java.io.File;
 
 public class Preprocessor {
     private static final String PREPROCESSOR = "Preprocessor";
-    private int threshold;
+    private static final double THRESHOLD = 0.75;
 
     /**
      * The goal is for each letter bitmap to have the same height and width
@@ -35,6 +36,28 @@ public class Preprocessor {
     }
 
     /**
+     * Determine whether a pixel should be black or white
+     * @param pixel The pixel in question
+     * @return true if the pixel should be black
+     */
+    private static boolean shouldBeBlack(int pixel) {
+        int alpha = Color.alpha(pixel);
+        int redValue = Color.red(pixel);
+        int blueValue = Color.blue(pixel);
+        int greenValue = Color.green(pixel);
+        if(alpha == 0x00) // Transparent pixels will be white
+            return false;
+        // distance from the white extreme
+        double distanceFromWhite = Math.sqrt(Math.pow(0xff - redValue, 2) + Math.pow(0xff - blueValue, 2) + Math.pow(0xff - greenValue, 2));
+        // distance from the black extreme //this should not be computed and might be as well a function of distanceFromWhite and the whole distance
+        double distanceFromBlack = Math.sqrt(Math.pow(0x00 - redValue, 2) + Math.pow(0x00 - blueValue, 2) + Math.pow(0x00 - greenValue, 2));
+        // distance between the extremes //this is a constant that should not be computed :p
+        double distance = distanceFromBlack + distanceFromWhite;
+        // distance between the extremes
+        return ((distanceFromWhite/distance) > THRESHOLD);
+    }
+
+    /**
      * Load the bitmap image
      * @param imagePath The path where the image is located
      * @return Returns the image
@@ -48,6 +71,7 @@ public class Preprocessor {
         if (imageFile.exists()) {
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inSampleSize = 4;
+            options.inMutable = true;
             bitmap = BitmapFactory.decodeFile(imageFile.getAbsolutePath(), options);
             Log.i(PREPROCESSOR, "Scaled height: " + bitmap.getHeight() + " Scaled width: " + bitmap.getWidth());
         }
@@ -84,5 +108,23 @@ public class Preprocessor {
         return greyscaled;
     }
 
+    /**
+     *
+     * @param greyscaled
+     * @return
+     */
+    public static Bitmap binarize(Bitmap greyscaled) {
+        for (int x = 0; x < greyscaled.getWidth(); x++) {
+            for (int y = 0; y < greyscaled.getHeight(); y++) {
+                int pixel = greyscaled.getPixel(x, y);
+
+                if (shouldBeBlack(pixel))
+                    greyscaled.setPixel(x, y, Color.BLACK);
+                else
+                    greyscaled.setPixel(x, y, Color.WHITE);
+            }
+        }
+        return greyscaled;
+    }
 
 }
