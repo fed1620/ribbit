@@ -13,7 +13,7 @@ import java.io.File;
 
 public class Preprocessor {
     private static final String PREPROCESSOR = "Preprocessor";
-    private static final double THRESHOLD = 0.75;
+    private static final double THRESHOLD = 0.575;
 
     /**
      * The goal is for each letter bitmap to have the same height and width
@@ -109,22 +109,77 @@ public class Preprocessor {
     }
 
     /**
-     *
-     * @param greyscaled
-     * @return
+     * Convert all pixels to either black or white
+     * @param b The greyscaled bitmap image
+     * @return The binarized bitmap image
      */
-    public static Bitmap binarize(Bitmap greyscaled) {
-        for (int x = 0; x < greyscaled.getWidth(); x++) {
-            for (int y = 0; y < greyscaled.getHeight(); y++) {
-                int pixel = greyscaled.getPixel(x, y);
+    public static Bitmap binarize(Bitmap b) {
+        for (int x = 0; x < b.getWidth(); x++) {
+            for (int y = 0; y < b.getHeight(); y++) {
+                int pixel = b.getPixel(x, y);
 
                 if (shouldBeBlack(pixel))
-                    greyscaled.setPixel(x, y, Color.BLACK);
+                    b.setPixel(x, y, Color.BLACK);
                 else
-                    greyscaled.setPixel(x, y, Color.WHITE);
+                    b.setPixel(x, y, Color.WHITE);
             }
         }
-        return greyscaled;
+        return b;
+    }
+
+    public static Bitmap crop(Bitmap b) {
+        // Coordinates
+        int xFirst = 0;
+        int xLast  = 0;
+        int yFirst = b.getHeight();
+        int yLast  = 0;
+
+
+        // Get the column range
+        for (int x = 0; x < b.getWidth(); ++x) {
+            for (int y = 0; y < b.getHeight(); ++y) {
+                if (b.getPixel(x, y) == Color.BLACK) {
+                    // Get the first column
+                    if (xFirst == 0)
+                        xFirst = x;
+
+                    // And the last column
+                    xLast = x;
+                }
+            }
+        }
+        Log.i(PREPROCESSOR, "First column: " + xFirst);
+        Log.i(PREPROCESSOR, "Last column:  " + xLast);
+
+
+        // Get the row range
+        for (int x = xFirst; x < xLast; ++x) {
+            for (int y = 0; y < b.getHeight(); ++y) {
+                if (b.getPixel(x, y) == Color.BLACK) {
+                    // Find the top-most black pixel
+                    if (y < yFirst)
+                        yFirst = y;
+
+                    // And the bottom-most pixel
+                    if (y > yLast)
+                        yLast = y;
+                }
+            }
+        }
+        Log.i(PREPROCESSOR, "First row: " + yFirst);
+        Log.i(PREPROCESSOR, "Last row:  " + yLast);
+
+
+        // Calculate the dimensions of the subimage
+        int x = xFirst;
+        int y = yFirst;
+        int w = xLast - xFirst;
+        int h = yLast - yFirst;
+
+        // Create the bitmap
+        b = Bitmap.createBitmap(b, x, y, w, h);
+
+        return b;
     }
 
 }

@@ -25,6 +25,7 @@ public class ProcessActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_process);
         loadImage();
+        processImage();
     }
 
 
@@ -56,15 +57,24 @@ public class ProcessActivity extends ActionBarActivity {
         // Load the bitmap
         bitmap = Preprocessor.load(getIntent().getStringExtra("imagePath"));
 
+        // Prepare the image view
+        image = (ImageView) findViewById(R.id.imageViewProcess);
+        image.setVisibility(View.VISIBLE);
+    }
+
+    /**
+     * Use our Preprocessor class to call the appropriate methods
+     */
+    private void processImage() {
         // Convert it to greyscale
         bitmap = Preprocessor.greyscale(bitmap);
 
         // Binarize it
         bitmap = Preprocessor.binarize(bitmap);
 
-        // Put it into the Image View
-        image = (ImageView) findViewById(R.id.imageViewProcess);
+        // Crop it
+        bitmap = Preprocessor.crop(bitmap);
         image.setImageBitmap(bitmap);
-        image.setVisibility(View.VISIBLE);
     }
+
 }
