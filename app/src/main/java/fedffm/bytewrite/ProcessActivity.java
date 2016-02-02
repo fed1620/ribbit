@@ -9,6 +9,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 
+import java.util.List;
+
 
 public class ProcessActivity extends ActionBarActivity {
     private static final String PROCESS_ACTIVITY = "ProcessActivity"; // Log Tag
@@ -72,6 +74,9 @@ public class ProcessActivity extends ActionBarActivity {
         // Crop it
         bitmap = Preprocessor.crop(bitmap);
         image.setImageBitmap(bitmap);
+
+        // Segment the characters
+        List<Character> characters = Preprocessor.segmentCharacters(bitmap);
     }
 
 }

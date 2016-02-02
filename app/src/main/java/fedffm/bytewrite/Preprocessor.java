@@ -10,6 +10,8 @@ import android.graphics.Paint;
 import android.util.Log;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Preprocessor {
     private static final String PREPROCESSOR = "Preprocessor";
@@ -195,6 +197,61 @@ public class Preprocessor {
         b = Bitmap.createBitmap(b, x, y, w, h);
 
         return b;
+    }
+
+    /**
+     * Attempt to parse characters out of the bitmap image
+     * @param bitmap The bitmap to be examined
+     * @return A list of bitmaps, each representing an
+     * unidentified Character
+     */
+    public static List<Character> segmentCharacters(Bitmap bitmap) {
+        List<Character> characters = new ArrayList<>();
+
+        int pixels;
+        boolean whiteSpace;
+        int pixelsPrevious;
+        boolean whiteSpacePrevious;
+
+        int characterCount = 0;
+
+        // Iterate through each column
+        for (int x = 0; x < bitmap.getWidth(); ++x) {
+
+            // Current column
+            pixels = 0;
+            whiteSpace = true;
+
+            // Previous column
+            pixelsPrevious = 0;
+            whiteSpacePrevious = true;
+
+
+            // Iterate through each row
+            for (int y = 0; y < bitmap.getHeight(); ++y) {
+                if (bitmap.getPixel(x, y) == Color.BLACK)
+                    pixels++;
+
+                if (x > 0)
+                    if (bitmap.getPixel((x - 1), y) == Color.BLACK)
+                        pixelsPrevious++;
+            }
+            Log.i(PREPROCESSOR, pixels + " pixels in column " + x);
+
+
+            if (pixelsPrevious !=0)
+                whiteSpacePrevious = false;
+
+            if (pixels != 0)
+                whiteSpace = false;
+
+            if (!whiteSpace && whiteSpacePrevious)
+                characterCount++;
+        }
+
+        Log.i(PREPROCESSOR, characterCount + " characters detected");
+
+        return characters;
     }
 
 }
