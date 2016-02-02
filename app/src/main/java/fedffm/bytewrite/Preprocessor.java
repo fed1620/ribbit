@@ -14,6 +14,7 @@ import java.io.File;
 public class Preprocessor {
     private static final String PREPROCESSOR = "Preprocessor";
     private static final double THRESHOLD = 0.575;
+    private static boolean LOGGING_ENABLED = false;
 
     /**
      * The goal is for each letter bitmap to have the same height and width
@@ -73,7 +74,10 @@ public class Preprocessor {
             options.inSampleSize = 4;
             options.inMutable = true;
             bitmap = BitmapFactory.decodeFile(imageFile.getAbsolutePath(), options);
-            Log.i(PREPROCESSOR, "Scaled height: " + bitmap.getHeight() + " Scaled width: " + bitmap.getWidth());
+
+            // Log the information
+            if (LOGGING_ENABLED)
+                Log.i(PREPROCESSOR, "Scaled height: " + bitmap.getHeight() + " Scaled width: " + bitmap.getWidth());
         }
         return bitmap;
     }
@@ -127,6 +131,11 @@ public class Preprocessor {
         return b;
     }
 
+    /**
+     * Crop out all of the excess white background
+     * @param b The original bitmap
+     * @return The cropped bitmap
+     */
     public static Bitmap crop(Bitmap b) {
         // Coordinates
         int xFirst = 0;
@@ -148,9 +157,12 @@ public class Preprocessor {
                 }
             }
         }
-        Log.i(PREPROCESSOR, "First column: " + xFirst);
-        Log.i(PREPROCESSOR, "Last column:  " + xLast);
 
+        // Log the info
+        if (LOGGING_ENABLED) {
+            Log.i(PREPROCESSOR, "First column: " + xFirst);
+            Log.i(PREPROCESSOR, "Last column:  " + xLast);
+        }
 
         // Get the row range
         for (int x = xFirst; x < xLast; ++x) {
@@ -166,9 +178,12 @@ public class Preprocessor {
                 }
             }
         }
-        Log.i(PREPROCESSOR, "First row: " + yFirst);
-        Log.i(PREPROCESSOR, "Last row:  " + yLast);
 
+        // Log the info
+        if (LOGGING_ENABLED){
+            Log.i(PREPROCESSOR, "First row: " + yFirst);
+            Log.i(PREPROCESSOR, "Last row:  " + yLast);
+        }
 
         // Calculate the dimensions of the subimage
         int x = xFirst;
