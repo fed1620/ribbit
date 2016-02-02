@@ -19,6 +19,7 @@ import android.widget.TextView;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -140,7 +141,7 @@ public class MainActivity extends ActionBarActivity {
      */
     public void launchCamera(View view) {
         // Create a file to store the image and get the directory/path
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
         String fileName = timeStamp + ".jpg";
         File directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
         imagePath = directory.getAbsolutePath() + "/" + fileName;

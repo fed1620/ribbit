@@ -1,7 +1,6 @@
 package fedffm.bytewrite;
 
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
@@ -9,8 +8,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
-
-import java.io.File;
 
 
 public class ProcessActivity extends ActionBarActivity {
