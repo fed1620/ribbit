@@ -25,6 +25,7 @@ import java.util.Locale;
 public class MainActivity extends ActionBarActivity {
     private static final int REQUEST_IMAGE_CAPTURE = 1;
     private static final String MAIN_ACTIVITY = "MainActivity";  // Log tag
+    private static boolean DETAILED_LOGGING = false;
 
     // Main Activity views
     private String imagePath = "";
@@ -40,7 +41,8 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Log.i(MAIN_ACTIVITY, "onCreate() fired");
+        if (DETAILED_LOGGING)
+            Log.i(MAIN_ACTIVITY, "onCreate() fired");
 
         // If an image exists, load it
         if (loadImage())
@@ -88,31 +90,36 @@ public class MainActivity extends ActionBarActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        Log.i(MAIN_ACTIVITY, "MainActivity has been destroyed");
+        if (DETAILED_LOGGING)
+            Log.i(MAIN_ACTIVITY, "MainActivity has been destroyed");
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        Log.i(MAIN_ACTIVITY, "MainActivity has been paused");
+        if (DETAILED_LOGGING)
+            Log.i(MAIN_ACTIVITY, "MainActivity has been paused");
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        Log.i(MAIN_ACTIVITY, "MainActivity has been stopped");
+        if (DETAILED_LOGGING)
+            Log.i(MAIN_ACTIVITY, "MainActivity has been stopped");
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        Log.i(MAIN_ACTIVITY, "MainActivity has been started");
+        if (DETAILED_LOGGING)
+            Log.i(MAIN_ACTIVITY, "MainActivity has been started");
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        Log.i(MAIN_ACTIVITY, "MainActivity has been resumed");
+        if (DETAILED_LOGGING)
+            Log.i(MAIN_ACTIVITY, "MainActivity has been resumed");
     }
 
     /**
@@ -163,7 +170,8 @@ public class MainActivity extends ActionBarActivity {
             return false;
 
         // Log the path to the image
-        Log.i(MAIN_ACTIVITY, "The path to the image is: " + imagePath);
+        if (DETAILED_LOGGING)
+            Log.i(MAIN_ACTIVITY, "The path to the image is: " + imagePath);
 
         // Load the bitmap
         bitmap = Preprocessor.load(imagePath);
