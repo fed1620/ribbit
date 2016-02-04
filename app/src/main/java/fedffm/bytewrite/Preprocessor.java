@@ -17,7 +17,7 @@ import java.util.Map;
 
 public class Preprocessor {
     private static final String PREPROCESSOR = "Preprocessor";
-    private static final double THRESHOLD = 0.575;
+    private static final double THRESHOLD = 0.6;
     private static boolean DETAILED_LOGGING = true;
 
     /**
@@ -30,36 +30,50 @@ public class Preprocessor {
     }
 
     /**
-     * Examine the bitmap containing a word, and attempt to determine
-     * whether:
-     *    0. Characters are cleanly separated by vertical whitespace
-     *    1. Characters are crossing over or under each other without touching
-     *    2. Characters are overlapping or touching
+     * Examine the bitmap containing a word and perform segmentation using the
+     * whitespace inbetween each character. Calculate the dimensions of each
+     * individual character, and use those dimensions to generate a bitmap
+     * which will then be associated with an unidentified character
+     *
+     *  _________________
+     * |    |   |   |    |
+     * |  W | O | R | D  |
+     *  -----------------
      *
      * @param bitmap The bitmap image containing the written word
-     * @return Returns an integer representing the type of word detected
-     *              0: Cleanly separated
-     *              1: Crossing over/under
-     *              2: Overlapping/touching
+     * @return Returns an list of unidentified characters (image segments)
      */
-    private static int detectCharacterDistribution(Bitmap bitmap) {
+    private static List<Character> preliminarySegmentation(Bitmap bitmap) {
+        List<Character> characters = new ArrayList<>();
         int pixels;
-        boolean whiteSpace;
         int pixelsPrevious;
+        boolean whiteSpace;
         boolean whiteSpacePrevious;
+        boolean lastColumn;
 
         // Track the number of characters the word contains
         // as well as the number of columns (width) of each character
-        Integer characterCount = 1;
-        Integer    columnCount = 0;
-        Map<Integer, Integer> characterWidths = new HashMap<>();
+        Integer characterCount   = 0;
+        Integer    columnCount   = 0;
+        Integer    rowCount      = 0;
+        Map<Integer, Integer> characterX      = new HashMap<>();
+        Map<Integer, Integer> characterY      = new HashMap<>();
+        Map<Integer, Integer> characterWidth  = new HashMap<>();
+        Map<Integer, Integer> characterHeight = new HashMap<>();
 
         // Iterate through each column
         for (int x = 0; x < bitmap.getWidth(); ++x) {
+            // Any time we start scanning a new character, we need to store
+            // the x coordinate where the new character begins
+            if (characterX.size() == characterCount)
+                characterX.put(characterCount, x);
+
+            // Is this the last column?
+            lastColumn = x == bitmap.getWidth() - 1;
 
             // Current column
             pixels = 0;
-            whiteSpace = false;
+            whiteSpace = true;
 
             // Previous column
             pixelsPrevious = 0;
@@ -70,87 +84,84 @@ public class Preprocessor {
             for (int y = 0; y < bitmap.getHeight(); ++y) {
                 // If a black pixel is detected, increment the pixel count
                 if (bitmap.getPixel(x, y) == Color.BLACK) {
-                    pixels++;
-                    whiteSpace = false;
-                } else {
-                    whiteSpace = true;
-                }
+                    // Any time we start scanning a new character, we need to store
+                    // the x coordinate where the new character begins
+                    // TODO: Instead of storing the first row encountered, store the HIGHEST row found
+                    if (characterY.size() == characterCount)
+                        characterY.put(characterCount, y);
 
-                // Do the same for the previous column
+                    whiteSpace = false;
+                    pixels++;
+                } else
+                    whiteSpace = true;
+
+
+                // Count how many pixels the entire previous column had
                 if (x > 0)
                     if (bitmap.getPixel((x - 1), y) == Color.BLACK) {
                         pixelsPrevious++;
                         whiteSpacePrevious = false;
-                    } else {
+                    } else
                         whiteSpacePrevious = true;
-                    }
+
+                // Store the longest column
+                if (pixels > rowCount)
+                    rowCount = pixels;
             }
 
-            // How many pixels did the column contain in total?
-            if (DETAILED_LOGGING)
-                Log.i(PREPROCESSOR, pixels + " pixels in column " + x);
-
-
             // The previous column contained one or more black pixels
-            if (pixelsPrevious !=0)
+            if (pixelsPrevious != 0)
                 whiteSpacePrevious = false;
 
             // The current column contains one or more black pixels
             if (pixels != 0) {
                 whiteSpace = false;
                 columnCount++;
-                Log.e(PREPROCESSOR, "Iterating column count to " + columnCount);
             }
 
+            // Log pixel count and column count
+            if (DETAILED_LOGGING) {
+                if (columnCount != 0)
+                    Log.e(PREPROCESSOR, "Iterating column count to " + columnCount);
+                Log.i(PREPROCESSOR, pixels + " pixels in column " + x);
+            }
 
-            // If a column with black pixels is detected,
+            // If a column of white pixels is detected
             // AND
-            // the previous column contained only white pixels,
-            // then a new character has been scanned
-            if (!whiteSpace && whiteSpacePrevious) {
-                characterWidths.put(characterCount, columnCount);
+            // the previous column contained black pixels...
+            // OR
+            // If this was the last column...
+            // then we have finished scanning a new character
+            if (whiteSpace && !whiteSpacePrevious) {
+                characterHeight.put(characterCount, rowCount);
+                characterWidth.put(characterCount, columnCount);
                 characterCount++;
-                Log.e(PREPROCESSOR, "Iterating character count to " + characterCount);
                 columnCount = 0;
+                rowCount = 0;
+            } else if (lastColumn) {
+                characterHeight.put(characterCount, rowCount);
+                characterWidth.put(characterCount, columnCount);
             }
         }
 
-        // How many total characters were detected?
-        Log.i(PREPROCESSOR, characterCount + " characters detected");
+        // Log:
+        //    1. # of characters
+        //    2. Size of map (should match # of characters)
+        //    3. Width of each character (obtained from map)
+        if (DETAILED_LOGGING) {
+            Log.i(PREPROCESSOR, (characterCount + 1) +  " characters detected");
+            Log.i(PREPROCESSOR, "Size of map: " + characterWidth.size());
 
-        // How wide was each character?
-        int width;
-
-        for (int i = 1; i <= characterWidths.size(); ++i) {
-            Log.i(PREPROCESSOR, "Size of map: " + characterWidths.size());
-            Log.i(PREPROCESSOR, "Width: " + characterWidths.get(i));
-            width = characterWidths.get(i);
-            Log.i(PREPROCESSOR, "Character number " + (i) + " was " + width + " pixels wide ");
+            for (int i = 0; i < characterWidth.size(); ++i) {
+                Log.i(PREPROCESSOR, "-------------------------------------------------------------");
+                Log.i(PREPROCESSOR, "-------------------------------------------------------------");
+                Log.i(PREPROCESSOR, "Character number " + (i + 1) + ":");
+                Log.i(PREPROCESSOR, "began at (x = " + characterX.get(i) + ", (y = " + characterY.get(i) + ")");
+                Log.i(PREPROCESSOR, "was " + characterWidth.get(i) + " pixels wide");
+                Log.i(PREPROCESSOR, "and " + characterHeight.get(i) + " pixels tall");
+            }
         }
-
-        return 0;
-    }
-
-    /**
-     * This algorithm relies on the fact that each letter is cleanly
-     * separated by at least one column that is comprised entirely of
-     * white pixels.
-     *
-     *  _________________
-     * |    |   |   |    |
-     * |  W | O | R | D  |
-     *  -----------------
-     *
-     *
-     * @param bitmap The bitmap image containing the written word
-     * @return A list of characters
-     *
-     */
-    private static List<Character> verticalSegmentation(Bitmap bitmap) {
-        List<Character> characters = new ArrayList<>();
-
         return characters;
-
     }
 
     /**
@@ -362,12 +373,10 @@ public class Preprocessor {
      * unidentified Character
      */
     public static List<Character> segmentCharacters(Bitmap bitmap) {
-        List<Character> characters = new ArrayList<>();
+        List<Character> characters;
 
         // Determine the layout of the word
-        int layout = detectCharacterDistribution(bitmap);
-        Log.i(PREPROCESSOR, "The word scanned is type " + layout);
-
+        characters = preliminarySegmentation(bitmap);
 
         return characters;
     }
