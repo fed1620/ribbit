@@ -17,6 +17,7 @@
 
     <Button
         android:onClick="launchCamera"
+        android:background="@android:color/background_light"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/cameraButton"
@@ -37,6 +38,7 @@
 
     <Button
         android:onClick="launchCamera"
+        android:background="@android:color/background_light"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/retakeButton"
@@ -48,6 +50,7 @@
 
     <Button
         android:onClick="process"
+        android:background="@android:color/background_light"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/processButton"

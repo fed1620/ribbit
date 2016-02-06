@@ -18,7 +18,8 @@ import java.util.Map;
 public class Preprocessor {
     private static final String PREPROCESSOR = "Preprocessor";
     private static final double THRESHOLD = 0.6;
-    private static boolean DETAILED_LOGGING = true;
+    private static boolean LOGGING_ENABLED = true;
+    private static boolean DETAILED_LOGGING = false;
 
     /**
      * The goal is for each letter bitmap to have the same height and width
@@ -47,6 +48,8 @@ public class Preprocessor {
         List<Character> characters = new ArrayList<>();
         int pixels;
         int pixelsPrevious;
+        int highestRow = bitmap.getHeight();
+        int lowestRow = 0;
         boolean whiteSpace;
         boolean whiteSpacePrevious;
         boolean lastColumn;
@@ -55,7 +58,6 @@ public class Preprocessor {
         // as well as the number of columns (width) of each character
         Integer characterCount   = 0;
         Integer    columnCount   = 0;
-        Integer    rowCount      = 0;
         Map<Integer, Integer> characterX      = new HashMap<>();
         Map<Integer, Integer> characterY      = new HashMap<>();
         Map<Integer, Integer> characterWidth  = new HashMap<>();
@@ -63,10 +65,6 @@ public class Preprocessor {
 
         // Iterate through each column
         for (int x = 0; x < bitmap.getWidth(); ++x) {
-            // Any time we start scanning a new character, we need to store
-            // the x coordinate where the new character begins
-            if (characterX.size() == characterCount)
-                characterX.put(characterCount, x);
 
             // Is this the last column?
             lastColumn = x == bitmap.getWidth() - 1;
@@ -79,16 +77,23 @@ public class Preprocessor {
             pixelsPrevious = 0;
             whiteSpacePrevious = false;
 
-
             // Iterate through each row
             for (int y = 0; y < bitmap.getHeight(); ++y) {
                 // If a black pixel is detected, increment the pixel count
                 if (bitmap.getPixel(x, y) == Color.BLACK) {
                     // Any time we start scanning a new character, we need to store
                     // the x coordinate where the new character begins
-                    // TODO: Instead of storing the first row encountered, store the HIGHEST row found
-                    if (characterY.size() == characterCount)
-                        characterY.put(characterCount, y);
+                    if (characterX.size() == characterCount)
+                        characterX.put(characterCount, x);
+
+                    // Keep track of the highest point of the character
+                    if (y < highestRow) {
+                        highestRow = y;
+                    }
+
+                    // And the lowest point...
+                    if (y > lowestRow)
+                        lowestRow = y;
 
                     whiteSpace = false;
                     pixels++;
@@ -104,9 +109,6 @@ public class Preprocessor {
                     } else
                         whiteSpacePrevious = true;
 
-                // Store the longest column
-                if (pixels > rowCount)
-                    rowCount = pixels;
             }
 
             // The previous column contained one or more black pixels
@@ -133,13 +135,16 @@ public class Preprocessor {
             // If this was the last column...
             // then we have finished scanning a new character
             if (whiteSpace && !whiteSpacePrevious) {
-                characterHeight.put(characterCount, rowCount);
+                characterY.put(characterCount, highestRow);
+                characterHeight.put(characterCount, lowestRow);
                 characterWidth.put(characterCount, columnCount);
                 characterCount++;
                 columnCount = 0;
-                rowCount = 0;
+                lowestRow = 0;
+                highestRow = bitmap.getHeight();
             } else if (lastColumn) {
-                characterHeight.put(characterCount, rowCount);
+                characterY.put(characterCount, highestRow);
+                characterHeight.put(characterCount, lowestRow);
                 characterWidth.put(characterCount, columnCount);
             }
         }
@@ -148,11 +153,11 @@ public class Preprocessor {
         //    1. # of characters
         //    2. Size of map (should match # of characters)
         //    3. Width of each character (obtained from map)
-        if (DETAILED_LOGGING) {
+        if (LOGGING_ENABLED) {
             Log.i(PREPROCESSOR, (characterCount + 1) +  " characters detected");
             Log.i(PREPROCESSOR, "Size of map: " + characterWidth.size());
 
-            for (int i = 0; i < characterWidth.size(); ++i) {
+            for (int i = 0; i <= characterCount; ++i) {
                 Log.i(PREPROCESSOR, "-------------------------------------------------------------");
                 Log.i(PREPROCESSOR, "-------------------------------------------------------------");
                 Log.i(PREPROCESSOR, "Character number " + (i + 1) + ":");
@@ -160,6 +165,20 @@ public class Preprocessor {
                 Log.i(PREPROCESSOR, "was " + characterWidth.get(i) + " pixels wide");
                 Log.i(PREPROCESSOR, "and " + characterHeight.get(i) + " pixels tall");
             }
+        }
+
+        // Create a subimage for each separate character, create a new unidentified
+        // Character object associated with each image, and add it to the list of
+        // Characters
+        for (int i = 0; i <= characterCount; ++i) {
+            Bitmap b = Bitmap.createBitmap(bitmap,
+                                           characterX.get(i),
+                                           characterY.get(i),
+                                           characterWidth.get(i),
+                                           (characterHeight.get(i)) - characterY.get(i));
+
+            Character c = new Character(b);
+            characters.add(c);
         }
         return characters;
     }

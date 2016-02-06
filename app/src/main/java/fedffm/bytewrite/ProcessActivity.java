@@ -8,6 +8,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 
 import java.util.List;
 
@@ -75,8 +76,34 @@ public class ProcessActivity extends ActionBarActivity {
         bitmap = Preprocessor.crop(bitmap);
         image.setImageBitmap(bitmap);
 
-        // Segment the characters
-        List<Character> characters = Preprocessor.segmentCharacters(bitmap);
     }
+
+    public void segment(View view) {
+        // Get the list of unidentified characters
+        List<Character> characters = Preprocessor.segmentCharacters(bitmap);
+
+        // Get the reference to the linear layout
+        LinearLayout imageGallery = (LinearLayout) findViewById(R.id.imageGallery);
+
+        // Display each
+        for (int i = 0; i < characters.size(); ++i) {
+            imageGallery.addView(getImageView(characters.get(i).getBitmap()));
+        }
+
+        image.setVisibility(View.INVISIBLE);
+    }
+
+    private View getImageView(Bitmap b) {
+        ImageView imageView = new ImageView(getApplicationContext());
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        lp.setMargins(0, 0, 20, 0);
+        imageView.setLayoutParams(lp);
+        imageView.setImageBitmap(b);
+
+        return imageView;
+    }
+
+
+
 
 }
