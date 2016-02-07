@@ -18,7 +18,7 @@ import java.util.Map;
 public class Preprocessor {
     private static final String PREPROCESSOR = "Preprocessor";
     private static final double THRESHOLD = 0.6;
-    private static boolean LOGGING_ENABLED = true;
+    private static boolean LOGGING_ENABLED = false;
     private static boolean DETAILED_LOGGING = false;
 
     /**
@@ -195,11 +195,55 @@ public class Preprocessor {
      * @return A list of characters
      *
      */
-    private static List<Character> precisionSegmentation(Bitmap bitmap) {
+    //TODO: public only for testing purposes
+    public static List<Character> precisionSegmentation(Bitmap bitmap) {
+        // What are the dimensions of the bitmap?
+        Log.i(PREPROCESSOR, "The dimensions of the segment are: " + bitmap.getWidth() + " x " + bitmap.getHeight());
         List<Character> characters = new ArrayList<>();
+        List <String> coordinates = new ArrayList<>();
+        String cursor;
 
+        // RIGHT TO LEFT
+        //                <-----
+        //               |
+        //               v
+        //         <-----
+        //        |
+        //        v
+        //  <-----
+        // |
+        // v
+        // Iterate through each column
+        for (int x = bitmap.getWidth() - 1; x >= 0; --x) {
+            int y = 0;
+
+            // Keep track of our position
+            cursor = "(column " + x + ", row " + y + ")";
+            Log.i(PREPROCESSOR, "Cursor position: " + cursor);
+
+            // Starting in the current column, iterate the cursor as far down as we can
+            while (y < bitmap.getHeight() && bitmap.getPixel(x, y) == Color.WHITE) {
+                ++y;
+
+                // If the cursor runs into a black pixel, move to the left
+                // until we are back in whitespace
+                while (y < bitmap.getHeight() && x > 0 && bitmap.getPixel(x, y) == Color.BLACK)
+                    --x;
+
+                // Keep track of our position
+                cursor = "(column " + x + ", row " + y + ")";
+                // Log the current position of the cursor
+                Log.i(PREPROCESSOR, "Cursor position: " + cursor);
+
+                // Return if the end of the bottom of the bitmap is reached
+                if (y == bitmap.getHeight()) {
+                    Log.i(PREPROCESSOR, "Final cursor position: " + cursor);
+                    Log.i(PREPROCESSOR, "Great success!");
+                    return characters;
+                }
+            }
+        }
         return characters;
-
     }
 
     /**

@@ -12,4 +12,5 @@
     <!--Process Activity-->
     <string name="title_activity_process">Process</string>
     <string name="segmentButton">Segment</string>
+    <string name="precisionButton">Precision Segment</string>
 </resources>

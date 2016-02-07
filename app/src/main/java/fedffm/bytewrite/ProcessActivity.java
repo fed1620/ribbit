@@ -7,6 +7,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
@@ -16,14 +17,22 @@ import java.util.List;
 public class ProcessActivity extends ActionBarActivity {
     private static final String PROCESS_ACTIVITY = "ProcessActivity"; // Log Tag
 
-    // Activity views
     private Bitmap bitmap;
+
+    // Activity views
     private ImageView image;
+    private LinearLayout imageGallery;
+    private Button segmentButton;
+    private Button precisionButton;
+
+    // List of characters
+    private List<Character> characters;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_process);
+        setupViews();
         loadImage();
         processImage();
     }
@@ -50,16 +59,30 @@ public class ProcessActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    private void setupViews() {
+        // Prepare the image view
+        image = (ImageView) findViewById(R.id.imageViewProcess);
+        image.setVisibility(View.VISIBLE);
+
+        // Image Gallery
+        imageGallery = (LinearLayout) findViewById(R.id.imageGallery);
+        imageGallery.setVisibility(View.INVISIBLE);
+
+        // "Segment" button
+        segmentButton = (Button) findViewById(R.id.segmentButton);
+        segmentButton.setVisibility(View.VISIBLE);
+
+        // "Precision Segment" button
+        precisionButton = (Button) findViewById(R.id.precisionButton);
+        precisionButton.setVisibility(View.INVISIBLE);
+    }
+
     /**
      * Load the bitmap from the device's storage
      */
     private void loadImage() {
         // Load the bitmap
         bitmap = Preprocessor.load(getIntent().getStringExtra("imagePath"));
-
-        // Prepare the image view
-        image = (ImageView) findViewById(R.id.imageViewProcess);
-        image.setVisibility(View.VISIBLE);
     }
 
     /**
@@ -75,22 +98,27 @@ public class ProcessActivity extends ActionBarActivity {
         // Crop it
         bitmap = Preprocessor.crop(bitmap);
         image.setImageBitmap(bitmap);
-
     }
 
     public void segment(View view) {
         // Get the list of unidentified characters
-        List<Character> characters = Preprocessor.segmentCharacters(bitmap);
+        characters = Preprocessor.segmentCharacters(bitmap);
 
-        // Get the reference to the linear layout
-        LinearLayout imageGallery = (LinearLayout) findViewById(R.id.imageGallery);
-
-        // Display each
+        // Display each character segment image in the linear layout
         for (int i = 0; i < characters.size(); ++i) {
             imageGallery.addView(getImageView(characters.get(i).getBitmap()));
         }
 
+        // Make sure the image gallery is visible
+        imageGallery.setVisibility(View.VISIBLE);
+
+        // And the "Precision Segment" button
+        precisionButton.setVisibility(View.VISIBLE);
+
+        // Hide the original bitmap view
+        // as well as the "Segment" button
         image.setVisibility(View.INVISIBLE);
+        segmentButton.setVisibility(View.INVISIBLE);
     }
 
     private View getImageView(Bitmap b) {
@@ -103,6 +131,22 @@ public class ProcessActivity extends ActionBarActivity {
         return imageView;
     }
 
+    public void precisionSegment(View view) {
+        assert characters != null;
+
+        // Test with a connected segment
+        Bitmap segment = characters.get(5).getBitmap();            // Hard-coded for the moment
+
+        // Make sure the image gallery goes away
+        imageGallery.setVisibility(View.INVISIBLE);
+
+        // Display it in the image view
+        image.setImageBitmap(segment);
+        image.setVisibility(View.VISIBLE);
+
+        // Apply precision segmentation to the bitmap
+        Preprocessor.precisionSegmentation(segment);
+    }
 
 
 
