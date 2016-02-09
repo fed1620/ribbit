@@ -203,7 +203,7 @@ public class Preprocessor {
     public static List<String> plinko(Bitmap bitmap) {
         // What are the dimensions of the bitmap?
         Log.i(PREPROCESSOR, "The dimensions of the segment are: " + bitmap.getWidth() + " x " + bitmap.getHeight());
-        List <String> coordinates = new ArrayList<>();
+        List<String> coordinates = new ArrayList<>();
         String currentCoordinates;
 
         // RIGHT TO LEFT
@@ -265,7 +265,7 @@ public class Preprocessor {
                     // What was the path?
                     for (int i = 0; i < coordinates.size(); ++i) {
                         // Parse the coordinates out
-                        String [] parts = coordinates.get(i).split(",");
+                        String[] parts = coordinates.get(i).split(",");
                         int xCoord = Integer.parseInt(parts[0]);
                         int yCoord = Integer.parseInt(parts[1]);
 
@@ -337,7 +337,97 @@ public class Preprocessor {
                     // What was the path?
                     for (int i = 0; i < coordinates.size(); ++i) {
                         // Parse the coordinates out
-                        String [] parts = coordinates.get(i).split(",");
+                        String[] parts = coordinates.get(i).split(",");
+                        int xCoord = Integer.parseInt(parts[0]);
+                        int yCoord = Integer.parseInt(parts[1]);
+
+                        // Draw a line so that we can see where the cropping occurs
+                        if (withinBounds(xCoord, yCoord, bitmap))
+                            bitmap.setPixel(xCoord, yCoord, Color.RED);
+                    }
+                    return coordinates;
+                }
+            }
+        }
+
+        //    ^ ^ ^ ^ ^ ^ ^
+        //    | | | | | | |
+        //<---  | | | | | |
+        //<-----  | | | | |
+        //<-------  | | | |
+        //<---------  | | |
+        //<-----------  | |
+        //<-------------  |
+        //<---------------
+
+        // Attempt to extract a portion of the segment using a 90 degree angle
+
+        // Begin iterating through the columns
+        for (int x = 20; x < bitmap.getWidth(); ++x) {
+            int xTemp = x;
+            Log.i(PREPROCESSOR, "x: " + x + " xTemp: " + xTemp);
+            // Start with a fresh list of coordinates
+            coordinates.clear();
+            // Give y the same coordinate as x
+            int y = x;
+
+
+            // Try to make it to the top of the bitmap without
+            // encountering a black pixel
+            while (y > 0 && y < bitmap.getHeight()) {
+                // Add the current position to the list of coordinates
+                if (bitmap.getPixel(x, y) == Color.WHITE) {
+                    coordinates.add(x + "," + y);
+
+                    --y;
+                }
+                else
+                    break;
+
+            }
+            // We reached the top of the bitmap
+            if (y == 0) {
+                // Add the last pixel to the list of coordinates
+                if (bitmap.getPixel(x, y) == Color.WHITE)
+                    coordinates.add(x + "," + y);
+
+                // Reset the position of Y to be x
+                y = xTemp;
+
+                // Backtrace back through the columns and see whether or
+                // not the entire path is free of black pixels
+                while (xTemp > 0 && xTemp < bitmap.getWidth()) {
+                    if (bitmap.getPixel(xTemp, y) == Color.WHITE) {
+                        // Add the current position to the list of coordinates
+                        coordinates.add(xTemp + "," + y);
+                        --xTemp;
+                    }
+                    else
+                        break;
+                }
+
+                // We reached the left-most edge of the bitmap
+                if (xTemp == 0) {
+                    // Make sure to add the last pixel to the list of
+                    // coordinates
+                    if (bitmap.getPixel(xTemp, y) == Color.WHITE)
+                        coordinates.add(xTemp + "," + y);
+
+                    // What was the path?
+                    for (int i = 0; i < coordinates.size(); ++i) {
+                        // Parse the coordinates out
+                        String[] parts = coordinates.get(i).split(",");
+                        int xCoord = Integer.parseInt(parts[0]);
+                        int yCoord = Integer.parseInt(parts[1]);
+
+                        // Draw a line so that we can see where the cropping occurs
+                        if (withinBounds(xCoord, yCoord, bitmap))
+                            bitmap.setPixel(xCoord, yCoord, Color.RED);
+                    }
+                    // What was the path?
+                    for (int i = 0; i < coordinates.size(); ++i) {
+                        // Parse the coordinates out
+                        String[] parts = coordinates.get(i).split(",");
                         int xCoord = Integer.parseInt(parts[0]);
                         int yCoord = Integer.parseInt(parts[1]);
 
