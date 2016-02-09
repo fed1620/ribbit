@@ -3,7 +3,6 @@ package fedffm.bytewrite;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -135,7 +134,7 @@ public class ProcessActivity extends ActionBarActivity {
         assert characters != null;
 
         // Test with a connected segment
-        Bitmap segment = characters.get(5).getBitmap();            // Hard-coded for the moment
+        Bitmap segment = characters.get(0).getBitmap();            // Hard-coded for the moment
 
         // Make sure the image gallery goes away
         imageGallery.setVisibility(View.INVISIBLE);
@@ -145,7 +144,7 @@ public class ProcessActivity extends ActionBarActivity {
         image.setVisibility(View.VISIBLE);
 
         // Apply precision segmentation to the bitmap
-        Preprocessor.precisionSegmentation(segment);
+        Preprocessor.plinko(segment);
     }
 
 
