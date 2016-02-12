@@ -351,6 +351,12 @@ public class Preprocessor {
             }
         }
 
+        //*****************************************************************
+        // TOP-LEFT:
+        //    Attempt to extract a quadrilateral portion of the bitmap by
+        //    beginning in the top-left corner and iterating to the right
+        //    and iterating downward
+        //*****************************************************************
         //    ^ ^ ^ ^ ^ ^ ^
         //    | | | | | | |
         //<---  | | | | | |
@@ -361,68 +367,77 @@ public class Preprocessor {
         //<-------------  |
         //<---------------
 
-        // TOP-LEFT:
-        //    Attempt to extract a portion of the segment using a 90 degree angle
-
-        boolean encounteredBlack = false;
-        boolean traversedThroughBlack = false;
-        int numBlackPixels = 0;
-
+        // Keep track of the coordinates
         List<Integer> xCoordinates = new ArrayList<>();
         List<Integer> yCoordinates = new ArrayList<>();
 
         // Begin iterating through the columns
         for (int x = 25; x < bitmap.getWidth(); ++x) {
-            // Start with an empty list of y coordinates
+            // Every time we begin iterating down a new column, we
+            // ought to start with an empty list of y coordinates
             yCoordinates.clear();
 
-            // Log our column position
-            Log.i(PREPROCESSOR, "> " + x + ",0");
+            // Log which column we are preparing to iterate down
+            if (DETAILED_LOGGING)
+                Log.e(PREPROCESSOR, "> " + x + ",0");
 
-            // Move down the bitmap one row at a time
+            // Move down the column one row at a time
             for (int y = 0; y < bitmap.getHeight(); ++y) {
-                // Start with an empty list of x coordinates
+                // Each time we begin iterating back through a new row,
+                // we should start with an empty list of x coordinates
                 xCoordinates.clear();
+                yCoordinates.add(y);
 
                 // Create a copy of our current column position so that
                 // we don't mess up the outer-most loop
                 int xCopy = x;
 
-                // Log our row position
-                Log.i(PREPROCESSOR, "v " + x + "," + y);
-                yCoordinates.add(y);
+                // Log which row we are preparing to back-trace through
+                if (DETAILED_LOGGING)
+                    Log.i(PREPROCESSOR, "v " + x + "," + y);
 
                 // If we encounter a black pixel while iterating down this column,
-                // move on to the next column
+                // simply move on to the next column
                 if (bitmap.getPixel(xCopy, y) == Color.BLACK) {
+                    if (DETAILED_LOGGING)
+                        bitmap.setPixel(xCopy, y, Color.MAGENTA);
                     break;
                 }
 
-                // For each row that we move down, backtrack 'x' to the first column
+                // For each row that we move down, backtrack to the first column
                 while (xCopy > 0 && bitmap.getPixel(xCopy, y) == Color.WHITE) {
-                    Log.i(PREPROCESSOR, "< " + xCopy + "," + y);
                     xCoordinates.add(xCopy);
                     --xCopy;
                 }
 
+                // If we are able to freely back-track all the way to the first column
+                // (the left-most edge of the bitmap), make sure that we've captured
+                // black pixels
                 if (xCopy == 0 && bitmap.getPixel(xCopy, y) == Color.WHITE) {
+                    int numBlackPixels = 0;
                     xCoordinates.add(xCopy);
 
                     // Count the number of black pixels contained within the area
                     // that we've recorded
                     for (int i = 0; i < xCoordinates.size(); ++i) {
                         for (int j = 0; j < yCoordinates.size(); ++j) {
-//                            bitmap.setPixel(xCoordinates.get(i), yCoordinates.get(j), Color.YELLOW);
-                            if (bitmap.getPixel(xCoordinates.get(i), yCoordinates.get(j)) == Color.BLACK)
+                            // For ever black pixel encountered within the area, increment the count
+                            if (bitmap.getPixel(xCoordinates.get(i), yCoordinates.get(j)) == Color.BLACK) {
                                 numBlackPixels++;
+                                if (DETAILED_LOGGING)
+                                    bitmap.setPixel(xCoordinates.get(i), yCoordinates.get(j), Color.DKGRAY);
+                            }
                         }
                     }
-
-                    // Ensure that we've captured a character
+                    // If there are no black pixels within the area that we've
+                    // scanned, simply move on to the next row
                     if (numBlackPixels == 0)
-                        break;
+                        continue;
 
-                    Log.i(PREPROCESSOR, "Great success!");
+                    if (LOGGING_ENABLED) {
+                        Log.i(PREPROCESSOR, "There were " + numBlackPixels + " pixels in the captured area");
+                        Log.i(PREPROCESSOR, "Great success!");
+                    }
 
                     // Draw the column first
                     for (int i = 0; i < yCoordinates.size(); ++i) {
@@ -440,110 +455,6 @@ public class Preprocessor {
                 }
             }
         }
-//
-//        //    ^ ^ ^ ^ ^ ^ ^
-//        //    | | | | | | |
-//        //<---  | | | | | |
-//        //<-----  | | | | |
-//        //<-------  | | | |
-//        //<---------  | | |
-//        //<-----------  | |
-//        //<-------------  |
-//        //<---------------
-//
-//        // TOP-LEFT:
-//        //    Attempt to extract a portion of the segment using a 90 degree angle
-//
-//        // Begin iterating through the columns
-//        for (int x = 20; x < bitmap.getWidth(); ++x) {
-//            // When we encounter a column of white pixels,
-//            // we will need to change the value of x in order
-//            // to iterate through the row and make sure that
-//            // all of the pixels are white.
-//            // We need a different variable so that we won't
-//            // mess up the flow of the outer-most loop
-//            int xCopy = x;
-//            int y = xCopy;
-//
-//            // Start with a fresh list of coordinates
-//            coordinates.clear();
-//
-//            // Try to make it to the top of the bitmap without
-//            // encountering a black pixel
-//            while (y > 0 && y < bitmap.getHeight()) {
-//                // Add the current position to the list of coordinates
-//                if (bitmap.getPixel(x, y) == Color.WHITE) {
-//                    coordinates.add(x + "," + y);
-//                    // Move up one row
-//                    --y;
-//                }
-//                else
-//                    break;
-//            }
-//
-//            // If 'y' == 0, then we are at positioned at the very first row
-//            // In other words, this is how we know that we've reached the
-//            // top of the bitmap
-//            if (y == 0) {
-//                // Because the pixel in the top row isn't included in
-//                // the previous while loop, we can't forget to add it
-//                // to our list of coordinates
-//                if (bitmap.getPixel(x, y) == Color.WHITE)
-//                    coordinates.add(x + "," + y);
-//
-//                // Reset the position of y to be x
-//                y = xCopy;
-//
-//                // Backtrace back through the columns and see whether or
-//                // not the entire row is free of black pixels
-//                while (xCopy > 0 && xCopy < bitmap.getWidth()) {
-//                    if (bitmap.getPixel(xCopy, y) == Color.WHITE) {
-//                        // Add the current position to the list of coordinates
-//                        coordinates.add(xCopy + "," + y);
-//                        // Move left one column
-//                        --xCopy;
-//                    }
-//                    else
-//                        break;
-//                }
-//
-//                // If the value of 'xCopy' (x) is 0, then we are positioned in
-//                // the very first column. In other words, we've reached the
-//                // left-most edge of the bitmap
-//                if (xCopy == 0) {
-//                    // Because the pixel in the left column isn't included in
-//                    // the previous while loop, we can't forget to add it
-//                    // to our list of coordinates
-//                    if (bitmap.getPixel(xCopy, y) == Color.WHITE)
-//                        coordinates.add(xCopy + "," + y);
-//
-//                    // What was the path?
-//                    for (int i = 0; i < coordinates.size(); ++i) {
-//                        // Parse the coordinates out
-//                        String[] parts = coordinates.get(i).split(",");
-//                        int xCoord = Integer.parseInt(parts[0]);
-//                        int yCoord = Integer.parseInt(parts[1]);
-//
-//                        // Draw a line so that we can see where the cropping occurs
-//                        if (withinBounds(xCoord, yCoord, bitmap))
-//                            bitmap.setPixel(xCoord, yCoord, Color.RED);
-//                    }
-//                    // What was the path?
-//                    for (int i = 0; i < coordinates.size(); ++i) {
-//                        // Parse the coordinates out
-//                        String[] parts = coordinates.get(i).split(",");
-//                        int xCoord = Integer.parseInt(parts[0]);
-//                        int yCoord = Integer.parseInt(parts[1]);
-//
-//                        // Draw a line so that we can see where the cropping occurs
-//                        if (withinBounds(xCoord, yCoord, bitmap))
-//                            bitmap.setPixel(xCoord, yCoord, Color.RED);
-//                    }
-//                    return coordinates;
-//                }
-//            }
-//        }
-
 
         //    ^ ^ ^ ^ ^ ^ ^
         //    | | | | | | |
