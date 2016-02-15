@@ -200,12 +200,13 @@ public class Preprocessor {
      *
      */
     //TODO: public only for testing purposes
-    public static List<String> getAdjacentCharacterCoordinates(Bitmap bitmap) {
+    public static Map<String, Integer> getAdjacentCharacterDimensions(Bitmap bitmap) {
         // What are the dimensions of the bitmap?
         if (LOGGING_ENABLED)
             Log.i(PREPROCESSOR, "The dimensions of the segment are: " + bitmap.getWidth() + " x " + bitmap.getHeight());
-        // Keep track of the coordinates
-        List<String> coordinates = new ArrayList<>();
+
+        // Keep track of the dimensions
+        Map<String, Integer> dimensions = new HashMap<>();
 
         //****************************************************************************************
         // TOP-LEFT:
@@ -317,7 +318,14 @@ public class Preprocessor {
                         if (withinBounds(xCoordinates.get(i), y, bitmap))
                             bitmap.setPixel(xCoordinates.get(i), y, Color.RED);
                     }
-                    return coordinates;
+                    // Return the starting point of the sub-image (x, y)
+                    // as well as the width (w), and the height (h)
+                    dimensions.put("x", 0);
+                    dimensions.put("y", 0);
+                    dimensions.put("w", x);
+                    dimensions.put("h", y);
+
+                    return dimensions;
                 }
             }
         }
@@ -436,11 +444,19 @@ public class Preprocessor {
                         if (withinBounds(xCoordinates.get(i), y, bitmap))
                             bitmap.setPixel(xCoordinates.get(i), y, Color.RED);
                     }
-                    return coordinates;
+
+                    // Return the starting point of the sub-image (x, y)
+                    // as well as the width (w), and the height (h)
+                    dimensions.put("x", x);
+                    dimensions.put("y", 0);
+                    dimensions.put("w", bitmap.getWidth() - x);
+                    dimensions.put("h", y);
+
+                    return dimensions;
                 }
             }
         }
-        return coordinates;
+        return dimensions;
     }
 
     /**

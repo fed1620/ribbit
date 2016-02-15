@@ -3,6 +3,7 @@ package fedffm.bytewrite;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -10,7 +11,9 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 public class ProcessActivity extends ActionBarActivity {
@@ -144,7 +147,16 @@ public class ProcessActivity extends ActionBarActivity {
         image.setVisibility(View.VISIBLE);
 
         // Apply precision segmentation to the bitmap
-        Preprocessor.getAdjacentCharacterCoordinates(segment);
+        Map<String, Integer> dimensions = Preprocessor.getAdjacentCharacterDimensions(segment);
+
+        int x = dimensions.get("x");
+        int y = dimensions.get("y");
+        int w = dimensions.get("w");
+        int h = dimensions.get("h");
+
+        Log.i(PROCESS_ACTIVITY, "Subimage begins at (" + x + ", " + y + ")");
+        Log.i(PROCESS_ACTIVITY, "w: " + w);
+        Log.i(PROCESS_ACTIVITY, "h: " + h);
     }
 
 
