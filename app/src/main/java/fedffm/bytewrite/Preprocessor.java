@@ -228,7 +228,7 @@ public class Preprocessor {
         List<Integer> yCoordinates = new ArrayList<>();
 
         // Begin iterating through the columns
-        for (int x = 25; x < bitmap.getWidth(); ++x) {
+        for (int x = 0; x < bitmap.getWidth(); ++x) {
             // Every time we begin iterating down a new column, we
             // ought to start with an empty list of y coordinates
             yCoordinates.clear();
@@ -285,14 +285,19 @@ public class Preprocessor {
                             }
                         }
                     }
+
                     // If there are no black pixels within the area that we've
                     // scanned, simply move on to the next row
-                    if (numBlackPixels == 0)
+                    float areaOfSegment = bitmap.getWidth() * bitmap.getHeight();
+                    float areaOfPixels = numBlackPixels / areaOfSegment * 100;
+
+                    if (numBlackPixels == 0 || areaOfPixels < 2.0)
                         continue;
 
                     if (LOGGING_ENABLED) {
                         Log.i(PREPROCESSOR, "There were " + numBlackPixels + " pixels in the captured area");
                         Log.i(PREPROCESSOR, "Great success!");
+                        Log.i(PREPROCESSOR, "The captured pixels comprise " + areaOfPixels + "% of the image's area");
                     }
 
                     // Draw the column first
@@ -333,7 +338,7 @@ public class Preprocessor {
         yCoordinates = new ArrayList<>();
 
         // Begin iterating through the columns
-        for (int x = bitmap.getWidth() - 25; x >= 0; --x) {
+        for (int x = bitmap.getWidth() - 1; x >= 0; --x) {
             // Every time we begin iterating down a new column, we
             // ought to start with an empty list of y coordinates
             yCoordinates.clear();
@@ -394,14 +399,19 @@ public class Preprocessor {
                             }
                         }
                     }
+
                     // If there are no black pixels within the area that we've
                     // scanned, simply move on to the next row
-                    if (numBlackPixels == 0)
+                    float areaOfSegment = bitmap.getWidth() * bitmap.getHeight();
+                    float areaOfPixels = numBlackPixels / areaOfSegment * 100;
+
+                    if (numBlackPixels == 0 || areaOfPixels < 2.0)
                         continue;
 
                     if (LOGGING_ENABLED) {
                         Log.i(PREPROCESSOR, "There were " + numBlackPixels + " pixels in the captured area");
                         Log.i(PREPROCESSOR, "Great success!");
+                        Log.i(PREPROCESSOR, "The captured pixels comprise " + areaOfPixels + "% of the image's area");
                     }
 
                     // Draw the column first
@@ -420,152 +430,6 @@ public class Preprocessor {
                 }
             }
         }
-
-//**************************************************************************************************
-//        // RIGHT TO LEFT
-//        // TOP TO BOTTOM
-//        //                <-----
-//        //               |
-//        //               v
-//        //         <-----
-//        //        |
-//        //        v
-//        //  <-----
-//        // |
-//        // v
-//        // Iterate through each column, beginning at the right-most column
-//        for (int x = bitmap.getWidth() - 1; x >= 0; --x) {
-//
-//            // Make sure that when switching to the next column,
-//            // the row position is reset back to the first row
-//            int y = 0;
-//
-//            // Because we had to reset back to the first row, don't
-//            // include any of the previous coordinates
-//            coordinates.clear();
-//
-//            // Add the current position to the list of coordinates
-//            currentCoordinates = x + "," + y;
-//            coordinates.add(currentCoordinates);
-//
-//            // Log our current position for debugging purposes
-//            if (DETAILED_LOGGING)
-//                Log.i(PREPROCESSOR, "Cursor position: " + currentCoordinates);
-//
-//            // Starting in the current column, iterate the currentCoordinates as far down as we can
-//            while (y < bitmap.getHeight() && bitmap.getPixel(x, y) == Color.WHITE) {
-//                ++y;
-//
-//                // If the currentCoordinates runs into a black pixel, move to the left
-//                // until we are back in whitespace
-//                if (y < bitmap.getHeight() && x > 0 && bitmap.getPixel(x, y) == Color.BLACK)
-//                    --x;
-//
-//                // Add the current position to the list of coordinates
-//                currentCoordinates = x + "," + y;
-//                coordinates.add(currentCoordinates);
-//
-//                // Log our current position for debugging purposes
-//                if (DETAILED_LOGGING)
-//                    Log.i(PREPROCESSOR, "Cursor position: " + currentCoordinates);
-//
-//                // Return if the end of the bitmap is reached
-//                if (y == bitmap.getHeight()) {
-//
-//                    // Log the fact that we found a path to the bottom of the segment
-//                    if (LOGGING_ENABLED) {
-//                        Log.i(PREPROCESSOR, "Final currentCoordinates position: " + currentCoordinates);
-//                        Log.i(PREPROCESSOR, "Great success!");
-//                    }
-//
-//                    // What was the path?
-//                    for (int i = 0; i < coordinates.size(); ++i) {
-//                        // Parse the coordinates out
-//                        String[] parts = coordinates.get(i).split(",");
-//                        int xCoord = Integer.parseInt(parts[0]);
-//                        int yCoord = Integer.parseInt(parts[1]);
-//
-//                        // Draw a line so that we can see where the cropping occurs
-//                        if (withinBounds(xCoord, yCoord, bitmap))
-//                            bitmap.setPixel(xCoord, yCoord, Color.RED);
-//                    }
-//                    return coordinates;
-//                }
-//            }
-//        }
-//**************************************************************************************************
-//        // RIGHT TO LEFT
-//        // BOTTOM TO TOP
-//        // <-----
-//        //       ^
-//        //       |
-//        //        <-----
-//        //              ^
-//        //              |
-//        //               <-----
-//        //                     ^
-//        //                     |
-//        // Iterate through each column, beginning at the right-most column
-//        for (int x = bitmap.getWidth() - 1; x >= 0; --x) {
-//
-//            // Make sure that when switching to the next column,
-//            // the row position is reset back to the last row
-//            int y = bitmap.getHeight() - 1;
-//
-//            // Because we had to reset back to the last row, don't
-//            // include any of the previous coordinates
-//            coordinates.clear();
-//
-//            // Add the current position to the list of coordinates
-//            currentCoordinates = x + "," + y;
-//            coordinates.add(currentCoordinates);
-//
-//            // Log our current position for debugging purposes
-//            if (DETAILED_LOGGING)
-//                Log.i(PREPROCESSOR, "Cursor position: " + currentCoordinates);
-//
-//            // Starting in the current column, iterate the currentCoordinates as far down as we can
-//            while (y > 0 && bitmap.getPixel(x, y) == Color.WHITE) {
-//                --y;
-//
-//                // If the currentCoordinates runs into a black pixel, move to the left
-//                // until we are back in whitespace
-//                if (y > 0 && x > 0 && bitmap.getPixel(x, y) == Color.BLACK)
-//                    --x;
-//
-//                // Add the current position to the list of coordinates
-//                currentCoordinates = x + "," + y;
-//                coordinates.add(currentCoordinates);
-//
-//                // Log our current position for debugging purposes
-//                if (DETAILED_LOGGING)
-//                    Log.i(PREPROCESSOR, "Cursor position: " + currentCoordinates);
-//
-//                // Return if the top of the bitmap has been reached
-//                if (y == 0) {
-//
-//                    // Log the fact that we found a path to the bottom of the segment
-//                    if (LOGGING_ENABLED) {
-//                        Log.i(PREPROCESSOR, "Final currentCoordinates position: " + currentCoordinates);
-//                        Log.i(PREPROCESSOR, "Great success!");
-//                    }
-//
-//                    // What was the path?
-//                    for (int i = 0; i < coordinates.size(); ++i) {
-//                        // Parse the coordinates out
-//                        String[] parts = coordinates.get(i).split(",");
-//                        int xCoord = Integer.parseInt(parts[0]);
-//                        int yCoord = Integer.parseInt(parts[1]);
-//
-//                        // Draw a line so that we can see where the cropping occurs
-//                        if (withinBounds(xCoord, yCoord, bitmap))
-//                            bitmap.setPixel(xCoord, yCoord, Color.RED);
-//                    }
-//                    return coordinates;
-//                }
-//            }
-//        }
-//**************************************************************************************************
         return coordinates;
     }
 
