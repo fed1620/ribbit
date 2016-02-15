@@ -9,6 +9,7 @@ import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
 import android.util.Log;
 
+import java.io.CharArrayReader;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -157,7 +158,7 @@ public class Preprocessor {
         //    1. # of characters
         //    2. Size of map (should match # of characters)
         //    3. Width of each character (obtained from map)
-        if (LOGGING_ENABLED) {
+        if (DETAILED_LOGGING) {
             Log.i(PREPROCESSOR, (characterCount + 1) +  " characters detected");
             Log.i(PREPROCESSOR, "Size of map: " + characterWidth.size());
 
@@ -196,11 +197,10 @@ public class Preprocessor {
      * of the "g" (without touching) cross under the "o" character
      *
      * @param bitmap The bitmap image containing the written word
-     * @return A list of strings (each string representing a pair of coordinates)
+     * @return A map containing the necessary bitmap dimensions to create a sub image
      *
      */
-    //TODO: public only for testing purposes
-    public static Map<String, Integer> getAdjacentCharacterDimensions(Bitmap bitmap) {
+    private static Map<String, Integer> getAdjacentCharacterDimensions(Bitmap bitmap) {
         // What are the dimensions of the bitmap?
         if (LOGGING_ENABLED)
             Log.i(PREPROCESSOR, "The dimensions of the segment are: " + bitmap.getWidth() + " x " + bitmap.getHeight());
@@ -306,18 +306,21 @@ public class Preprocessor {
                         Log.i(PREPROCESSOR, "The captured pixels comprise " + areaOfPixels + "% of the image's area");
                     }
 
-                    // Draw the column first
-                    for (int i = 0; i < yCoordinates.size(); ++i) {
-                        // Draw a line so that we can see where the cropping occurs
-                        if (withinBounds(x, yCoordinates.get(i), bitmap))
-                            bitmap.setPixel(x, yCoordinates.get(i), Color.RED);
+                    if (DETAILED_LOGGING) {
+                        // Draw the column first
+                        for (int i = 0; i < yCoordinates.size(); ++i) {
+                            // Draw a line so that we can see where the cropping occurs
+                            if (withinBounds(x, yCoordinates.get(i), bitmap))
+                                bitmap.setPixel(x, yCoordinates.get(i), Color.RED);
+                        }
+                        // Now draw the row
+                        for (int i = 0; i < xCoordinates.size(); ++i) {
+                            // Draw a line so that we can see where the cropping occurs
+                            if (withinBounds(xCoordinates.get(i), y, bitmap))
+                                bitmap.setPixel(xCoordinates.get(i), y, Color.RED);
+                        }
                     }
-                    // Now draw the row
-                    for (int i = 0; i < xCoordinates.size(); ++i) {
-                        // Draw a line so that we can see where the cropping occurs
-                        if (withinBounds(xCoordinates.get(i), y, bitmap))
-                            bitmap.setPixel(xCoordinates.get(i), y, Color.RED);
-                    }
+
                     // Return the starting point of the sub-image (x, y)
                     // as well as the width (w), and the height (h)
                     dimensions.put("x", 0);
@@ -432,17 +435,19 @@ public class Preprocessor {
                         Log.i(PREPROCESSOR, "The captured pixels comprise " + areaOfPixels + "% of the image's area");
                     }
 
-                    // Draw the column first
-                    for (int i = 0; i < yCoordinates.size(); ++i) {
-                        // Draw a line so that we can see where the cropping occurs
-                        if (withinBounds(x, yCoordinates.get(i), bitmap))
-                            bitmap.setPixel(x, yCoordinates.get(i), Color.RED);
-                    }
-                    // Now draw the row
-                    for (int i = 0; i < xCoordinates.size(); ++i) {
-                        // Draw a line so that we can see where the cropping occurs
-                        if (withinBounds(xCoordinates.get(i), y, bitmap))
-                            bitmap.setPixel(xCoordinates.get(i), y, Color.RED);
+                    if (DETAILED_LOGGING) {
+                        // Draw the column first
+                        for (int i = 0; i < yCoordinates.size(); ++i) {
+                            // Draw a line so that we can see where the cropping occurs
+                            if (withinBounds(x, yCoordinates.get(i), bitmap))
+                                bitmap.setPixel(x, yCoordinates.get(i), Color.RED);
+                        }
+                        // Now draw the row
+                        for (int i = 0; i < xCoordinates.size(); ++i) {
+                            // Draw a line so that we can see where the cropping occurs
+                            if (withinBounds(xCoordinates.get(i), y, bitmap))
+                                bitmap.setPixel(xCoordinates.get(i), y, Color.RED);
+                        }
                     }
 
                     // Return the starting point of the sub-image (x, y)
@@ -457,6 +462,60 @@ public class Preprocessor {
             }
         }
         return dimensions;
+    }
+
+    /**
+     * This algorithm is applied to a word which contains characters that
+     * are not directly touching each other, but characters that cross over
+     * each other's vertical space, thus preventing vertical segmentation.
+     *
+     * An example might be the characters: "og" , in the event that the 'tail'
+     * of the "g" (without touching) cross under the "o" character
+     *
+     * @param original The bitmap image containing two characters
+     * @return A list of two unidentified characters
+     *
+     */
+    private static List<Character> precisionSegmentation(Bitmap original) {
+        List<Character> characters = new ArrayList<>();
+
+        // Start by getting the dimensions of one of the characters
+        Map<String, Integer> dimensions = getAdjacentCharacterDimensions(original);
+
+        assert dimensions != null;
+
+        int x = dimensions.get("x");
+        int y = dimensions.get("y");
+        int w = dimensions.get("w");
+        int h = dimensions.get("h");
+
+        // Prepare two new bitmaps that will be derived from the original
+        Bitmap characterOne;
+        Bitmap characterTwo;
+
+        // Create the bitmap for the first character
+        characterOne = Bitmap.createBitmap(original, x, y, w, h);
+
+        // Now remove the character from the original bitmap
+        for (int i = x; i < (x+ w); ++i)
+            for (int j = y; j < (y + h); ++j)
+                original.setPixel(i, j, Color.WHITE);
+
+        // Crop out the excess whitespace that was just created
+        characterOne = crop(characterOne);
+        characterTwo = crop(original);
+
+
+        // Determine the order of the segmented characters
+        if (x == 0) {
+            characters.add(new Character(characterOne));
+            characters.add(new Character(characterTwo));
+        }
+        else {
+            characters.add(new Character(characterTwo));
+            characters.add(new Character(characterOne));
+        }
+        return characters;
     }
 
     /**
@@ -660,11 +719,48 @@ public class Preprocessor {
      * unidentified Character
      */
     public static List<Character> segmentCharacters(Bitmap bitmap) {
-        List<Character> characters;
-
         // Determine the layout of the word
-        characters = preliminarySegmentation(bitmap);
+        List<Character> characters = preliminarySegmentation(bitmap);
 
+        // Keep track of the segment sizes
+        List<Float> segmentSizes = new ArrayList<>();
+
+        // Determine the average segment size
+        int numSegments = 0;
+        float averageSegmentSize = 0;
+
+        // What is the actual size of each segment?
+        for (int i = 0; i < characters.size(); ++i) {
+            // Compute sum of each segment size, and keep track
+            // of the number of segments
+            averageSegmentSize += characters.get(i).sizeValue();
+            numSegments++;
+
+            // Add the size of each segment to a list
+            segmentSizes.add(characters.get(i).sizeValue());
+        }
+
+        // Log the average
+        averageSegmentSize /= (numSegments);
+        Log.i(PREPROCESSOR, "Average segment size: " + averageSegmentSize + '\n');
+
+        // Are any of the segments unusually big? If so, the segment
+        // probably contains more than one character
+        for (int i = 0; i < segmentSizes.size(); ++i) {
+            Log.i(PREPROCESSOR, "The size of segment " + (i + 1) + " is " + segmentSizes.get(i));
+            if (segmentSizes.get(i) > 3.0) {
+                Log.e(PREPROCESSOR, "Abnormally large segment detected!");
+
+                // Perform precision segmentation on the large segment
+                List <Character> segmentedCharacters = precisionSegmentation(characters.get(i).getBitmap());
+                characters.remove(i);
+
+                // Replace the large segment with the precision-segmented sub-segments
+                for (int j = 0; j < segmentedCharacters.size(); ++j) {
+                    characters.add((i + j), segmentedCharacters.get(j));
+                }
+            }
+        }
         return characters;
     }
 }

@@ -56,4 +56,16 @@ public class Character {
         if (quadrants.size() < 4)
             quadrants.add(quadrant);
     }
+
+    /**
+     * Calculate a scaled size value based upon the area (in pixels)
+     * of the character's bitmap. This will help us estimate whether
+     * or not the segment is actually a single character
+     * @return Return a scaled value which represents the size of the segment
+     */
+    public float sizeValue() {
+        assert bitmap != null;
+
+        return ((float)bitmap.getWidth() * (float)(bitmap.getHeight()) / 1000);
+    }
 }
