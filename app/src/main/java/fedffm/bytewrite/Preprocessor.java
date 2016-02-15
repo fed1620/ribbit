@@ -200,7 +200,7 @@ public class Preprocessor {
      *
      */
     //TODO: public only for testing purposes
-    public static List<String> plinko(Bitmap bitmap) {
+    public static List<String> getAdjacentCharacterCoordinates(Bitmap bitmap) {
         // What are the dimensions of the bitmap?
         if (LOGGING_ENABLED)
             Log.i(PREPROCESSOR, "The dimensions of the segment are: " + bitmap.getWidth() + " x " + bitmap.getHeight());
@@ -286,11 +286,16 @@ public class Preprocessor {
                         }
                     }
 
-                    // If there are no black pixels within the area that we've
-                    // scanned, simply move on to the next row
+                    // Calculate what percent of the bitmap's area is occupied by
+                    // the pixels that have been captured
                     float areaOfSegment = bitmap.getWidth() * bitmap.getHeight();
                     float areaOfPixels = numBlackPixels / areaOfSegment * 100;
 
+                    // Continue iterating if the section of the bitmap:
+                    //    1. Doesn't contain any black pixels at all
+                    //    2. Contains an extremely small amount of pixels
+                    //       (Prevent the dot of the 'i' from being segmented
+                    //        as a separate character)
                     if (numBlackPixels == 0 || areaOfPixels < 2.0)
                         continue;
 
@@ -400,11 +405,16 @@ public class Preprocessor {
                         }
                     }
 
-                    // If there are no black pixels within the area that we've
-                    // scanned, simply move on to the next row
+                    // Calculate what percent of the bitmap's area is occupied by
+                    // the pixels that have been captured
                     float areaOfSegment = bitmap.getWidth() * bitmap.getHeight();
                     float areaOfPixels = numBlackPixels / areaOfSegment * 100;
 
+                    // Continue iterating if the section of the bitmap:
+                    //    1. Doesn't contain any black pixels at all
+                    //    2. Contains an extremely small amount of pixels
+                    //       (Prevent the dot of the 'i' from being segmented
+                    //        as a separate character)
                     if (numBlackPixels == 0 || areaOfPixels < 2.0)
                         continue;
 
@@ -452,7 +462,6 @@ public class Preprocessor {
         List<Character> characters = new ArrayList<>();
 
         return characters;
-
     }
 
     /**
@@ -642,5 +651,4 @@ public class Preprocessor {
 
         return characters;
     }
-
 }

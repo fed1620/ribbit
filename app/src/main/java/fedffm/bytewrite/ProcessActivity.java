@@ -144,7 +144,7 @@ public class ProcessActivity extends ActionBarActivity {
         image.setVisibility(View.VISIBLE);
 
         // Apply precision segmentation to the bitmap
-        Preprocessor.plinko(segment);
+        Preprocessor.getAdjacentCharacterCoordinates(segment);
     }
 
 
