@@ -66,6 +66,6 @@ public class Character {
     public float sizeValue() {
         assert bitmap != null;
 
-        return ((float)bitmap.getWidth() * (float)(bitmap.getHeight()) / 1000);
+        return ((float)bitmap.getWidth() * (float)(bitmap.getHeight()) / 1500);
     }
 }

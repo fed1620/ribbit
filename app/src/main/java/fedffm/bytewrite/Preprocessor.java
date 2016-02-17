@@ -203,7 +203,7 @@ public class Preprocessor {
     private static Map<String, Integer> getAdjacentCharacterDimensions(Bitmap bitmap) {
         // What are the dimensions of the bitmap?
         if (LOGGING_ENABLED)
-            Log.i(PREPROCESSOR, "The dimensions of the segment are: " + bitmap.getWidth() + " x " + bitmap.getHeight());
+            Log.i(PREPROCESSOR, "The size of the segment is: " + bitmap.getWidth() + " x " + bitmap.getHeight());
 
         // Keep track of the dimensions
         Map<String, Integer> dimensions = new HashMap<>();
@@ -482,39 +482,45 @@ public class Preprocessor {
         // Start by getting the dimensions of one of the characters
         Map<String, Integer> dimensions = getAdjacentCharacterDimensions(original);
 
-        assert dimensions != null;
-
-        int x = dimensions.get("x");
-        int y = dimensions.get("y");
-        int w = dimensions.get("w");
-        int h = dimensions.get("h");
-
-        // Prepare two new bitmaps that will be derived from the original
-        Bitmap characterOne;
-        Bitmap characterTwo;
-
-        // Create the bitmap for the first character
-        characterOne = Bitmap.createBitmap(original, x, y, w, h);
-
-        // Now remove the character from the original bitmap
-        for (int i = x; i < (x+ w); ++i)
-            for (int j = y; j < (y + h); ++j)
-                original.setPixel(i, j, Color.WHITE);
-
-        // Crop out the excess whitespace that was just created
-        characterOne = crop(characterOne);
-        characterTwo = crop(original);
-
-
-        // Determine the order of the segmented characters
-        if (x == 0) {
-            characters.add(new Character(characterOne));
-            characters.add(new Character(characterTwo));
+        // If the dimensions map is empty, log an error
+        if (dimensions.isEmpty()) {
+            Log.e(PREPROCESSOR, "Error: unable to derive dimensions from segment");
+            return characters;
         }
-        else {
-            characters.add(new Character(characterTwo));
-            characters.add(new Character(characterOne));
-        }
+
+            // Get the dimensions from the map
+            Log.i(PREPROCESSOR, "Number of objects in 'dimensions' map: " + dimensions.size());
+            int x = dimensions.get("x");
+            int y = dimensions.get("y");
+            int w = dimensions.get("w");
+            int h = dimensions.get("h");
+
+            // Prepare two new bitmaps that will be derived from the original
+            Bitmap characterOne;
+            Bitmap characterTwo;
+
+            // Create the bitmap for the first character
+            characterOne = Bitmap.createBitmap(original, x, y, w, h);
+
+            // Now remove the character from the original bitmap
+            for (int i = x; i < (x+ w); ++i)
+                for (int j = y; j < (y + h); ++j)
+                    original.setPixel(i, j, Color.WHITE);
+
+            // Crop out the excess whitespace that was just created
+            characterOne = crop(characterOne);
+            characterTwo = crop(original);
+
+
+            // Determine the order of the segmented characters
+            if (x == 0) {
+                characters.add(new Character(characterOne));
+                characters.add(new Character(characterTwo));
+            }
+            else {
+                characters.add(new Character(characterTwo));
+                characters.add(new Character(characterOne));
+            }
         return characters;
     }
 
@@ -748,16 +754,35 @@ public class Preprocessor {
         // probably contains more than one character
         for (int i = 0; i < segmentSizes.size(); ++i) {
             Log.i(PREPROCESSOR, "The size of segment " + (i + 1) + " is " + segmentSizes.get(i));
-            if (segmentSizes.get(i) > 3.0) {
+
+            // Define what constitutes "unusually big"
+            float sizeThreshold = (float)(averageSegmentSize * (segmentSizes.size() / 2.5));
+            Log.i(PREPROCESSOR, "Size threshold:          " + sizeThreshold);
+
+            // If an unusually big segment is detected, we pass it off to
+            // be precision-segmented, and update the list of characters
+            // with the newly-returned sub-segments
+            if (segmentSizes.get(i) > sizeThreshold) {
                 Log.e(PREPROCESSOR, "Abnormally large segment detected!");
 
                 // Perform precision segmentation on the large segment
                 List <Character> segmentedCharacters = precisionSegmentation(characters.get(i).getBitmap());
+
+                // Detect an unsuccessful precision segmentation
+                if (segmentedCharacters.isEmpty()) {
+                    Log.e(PREPROCESSOR, "Error: precision segmentation failed. Different segmentation method required");
+                    continue;
+                }
+
+                // Because we are turning one segment into two smaller segments,
+                // we need to update our list of characters and segment sizes
                 characters.remove(i);
+                segmentSizes.remove(i);
 
                 // Replace the large segment with the precision-segmented sub-segments
                 for (int j = 0; j < segmentedCharacters.size(); ++j) {
                     characters.add((i + j), segmentedCharacters.get(j));
+                    segmentSizes.add((i + j), characters.get(j).sizeValue());
                 }
             }
         }
