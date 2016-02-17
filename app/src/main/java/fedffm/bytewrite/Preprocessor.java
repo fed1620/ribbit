@@ -202,7 +202,7 @@ public class Preprocessor {
      */
     private static Map<String, Integer> getAdjacentCharacterDimensions(Bitmap bitmap) {
         // What are the dimensions of the bitmap?
-        if (LOGGING_ENABLED)
+        if (DETAILED_LOGGING)
             Log.i(PREPROCESSOR, "The size of the segment is: " + bitmap.getWidth() + " x " + bitmap.getHeight());
 
         // Keep track of the dimensions
@@ -300,13 +300,11 @@ public class Preprocessor {
                     if (numBlackPixels == 0 || areaOfPixels < 2.0)
                         continue;
 
-                    if (LOGGING_ENABLED) {
+                    if (DETAILED_LOGGING) {
                         Log.i(PREPROCESSOR, "There were " + numBlackPixels + " pixels in the captured area");
                         Log.i(PREPROCESSOR, "Great success!");
                         Log.i(PREPROCESSOR, "The captured pixels comprise " + areaOfPixels + "% of the image's area");
-                    }
 
-                    if (DETAILED_LOGGING) {
                         // Draw the column first
                         for (int i = 0; i < yCoordinates.size(); ++i) {
                             // Draw a line so that we can see where the cropping occurs
@@ -429,13 +427,11 @@ public class Preprocessor {
                     if (numBlackPixels == 0 || areaOfPixels < 2.0)
                         continue;
 
-                    if (LOGGING_ENABLED) {
+                    if (DETAILED_LOGGING) {
                         Log.i(PREPROCESSOR, "There were " + numBlackPixels + " pixels in the captured area");
                         Log.i(PREPROCESSOR, "Great success!");
                         Log.i(PREPROCESSOR, "The captured pixels comprise " + areaOfPixels + "% of the image's area");
-                    }
 
-                    if (DETAILED_LOGGING) {
                         // Draw the column first
                         for (int i = 0; i < yCoordinates.size(); ++i) {
                             // Draw a line so that we can see where the cropping occurs
@@ -489,7 +485,6 @@ public class Preprocessor {
         }
 
             // Get the dimensions from the map
-            Log.i(PREPROCESSOR, "Number of objects in 'dimensions' map: " + dimensions.size());
             int x = dimensions.get("x");
             int y = dimensions.get("y");
             int w = dimensions.get("w");
@@ -725,45 +720,47 @@ public class Preprocessor {
      * unidentified Character
      */
     public static List<Character> segmentCharacters(Bitmap bitmap) {
-        // Determine the layout of the word
+        // Get the initial set of segments, and keep track of their sizes
         List<Character> characters = preliminarySegmentation(bitmap);
-
-        // Keep track of the segment sizes
         List<Float> segmentSizes = new ArrayList<>();
 
-        // Determine the average segment size
-        int numSegments = 0;
-        float averageSegmentSize = 0;
+        // Variables we will use in order to track the average segment size
+        int   numSegments = 0;
+        float sum = 0;
+        float averageSegmentSize;
 
-        // What is the actual size of each segment?
+        // Examine each segment and determine the size of each
         for (int i = 0; i < characters.size(); ++i) {
             // Compute sum of each segment size, and keep track
             // of the number of segments
-            averageSegmentSize += characters.get(i).sizeValue();
+            sum += characters.get(i).sizeValue();
             numSegments++;
 
             // Add the size of each segment to a list
             segmentSizes.add(characters.get(i).sizeValue());
         }
 
-        // Log the average
-        averageSegmentSize /= (numSegments);
-        Log.i(PREPROCESSOR, "Average segment size: " + averageSegmentSize + '\n');
+        // Get the average segment size
+        averageSegmentSize = sum / numSegments;
+        Log.i(PREPROCESSOR, "Average segment size:    " + averageSegmentSize + '\n');
+
+        // What constitutes an "unusually big" segment size?
+        //    The longer the word, the tighter the threshold will be
+        //    In other words, a shorter word will have a more forgiving threshold
+        //    For example:
+        //       A word with 4  segments will have a threshold of: (averageSegmentSize * 4)
+        //       A word with 10 segments will have a threshold of: (averageSegmentSize * 1.4)
+        float sizeThreshold = (float)(averageSegmentSize * 2.0);
+        Log.i(PREPROCESSOR, "Size threshold:          " + sizeThreshold);
 
         // Are any of the segments unusually big? If so, the segment
         // probably contains more than one character
         for (int i = 0; i < segmentSizes.size(); ++i) {
-            Log.i(PREPROCESSOR, "The size of segment " + (i + 1) + " is " + segmentSizes.get(i));
-
-            // Define what constitutes "unusually big"
-            float sizeThreshold = (float)(averageSegmentSize * (segmentSizes.size() / 2.5));
-            Log.i(PREPROCESSOR, "Size threshold:          " + sizeThreshold);
-
             // If an unusually big segment is detected, we pass it off to
             // be precision-segmented, and update the list of characters
             // with the newly-returned sub-segments
-            if (segmentSizes.get(i) > sizeThreshold) {
-                Log.e(PREPROCESSOR, "Abnormally large segment detected!");
+            if ((segmentSizes.get(i) - sizeThreshold) >= .5) {
+                Log.e(PREPROCESSOR, "The size of segment " + (i + 1) + " is " + segmentSizes.get(i));
 
                 // Perform precision segmentation on the large segment
                 List <Character> segmentedCharacters = precisionSegmentation(characters.get(i).getBitmap());
@@ -785,7 +782,11 @@ public class Preprocessor {
                     segmentSizes.add((i + j), characters.get(j).sizeValue());
                 }
             }
+            else
+                Log.i(PREPROCESSOR, "The size of segment " + (i + 1) + " is " + segmentSizes.get(i));
         }
+        Log.i(PREPROCESSOR, "-------------------------------------------------------------");
+        Log.i(PREPROCESSOR, "-------------------------------------------------------------");
         return characters;
     }
 }
