@@ -9,10 +9,8 @@ import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
 import android.util.Log;
 
-import java.io.CharArrayReader;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -777,14 +775,15 @@ public class Preprocessor {
 
                 // Detect unsuccessful precision segmentation
                 if (segmentedCharacters.isEmpty()) {
-                    Log.e(PREPROCESSOR, "Error: precision segmentation failed. Performing division segmentation...");
+                    Log.e(PREPROCESSOR, "Error: precision segmentation failed");
+                    continue;
 
-                    // Attempt to perform division segmentation
-                    segmentedCharacters = divisionSegmentation((characters.get(i).getBitmap()));
-                    if (segmentedCharacters.isEmpty()) {
-                        Log.e(PREPROCESSOR, "Error: division segmentation failed.");
-                        continue;
-                    }
+//                    // Attempt to perform division segmentation
+//                    segmentedCharacters = divisionSegmentation((characters.get(i).getBitmap()));
+//                    if (segmentedCharacters.isEmpty()) {
+//                        Log.e(PREPROCESSOR, "Error: division segmentation failed.");
+//
+//                    }
                 }
 
                 // Because we are turning one segment into two smaller segments,

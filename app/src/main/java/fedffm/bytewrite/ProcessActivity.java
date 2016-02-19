@@ -1,7 +1,9 @@
 package fedffm.bytewrite;
 
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -11,9 +13,15 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Random;
 
 
 public class ProcessActivity extends ActionBarActivity {
@@ -98,6 +106,7 @@ public class ProcessActivity extends ActionBarActivity {
     public void segment(View view) {
         // Get the list of unidentified characters
         List<Character> characters = Preprocessor.segmentCharacters(bitmap);
+        saveSegments(characters);
 
         // Display each character segment image in the linear layout
         for (int i = 0; i < characters.size(); ++i) {
@@ -123,4 +132,39 @@ public class ProcessActivity extends ActionBarActivity {
 
         return imageView;
     }
+
+    /**
+     * Generate our character pool
+     */
+    public void saveSegments(List<Character> characters) {
+        for (int i = 0; i < characters.size(); ++i) {
+            saveImage(characters.get(i).getBitmap());
+        }
+    }
+
+    /**
+     * Save a bitmap
+     * @param finalBitmap The bitmap to be saved
+     */
+    private void saveImage(Bitmap finalBitmap) {
+        // Get the directory to the download folder
+        String root = Environment.getExternalStorageDirectory().toString();
+        File myDir = new File(root + "/bytewrite");
+        myDir.mkdir();
+
+        String fname = new Random().nextInt(1000000) + ".jpg";
+
+        File file = new File (myDir, fname);
+        if (file.exists ()) file.delete ();
+        try {
+            FileOutputStream out = new FileOutputStream(file);
+            finalBitmap.compress(Bitmap.CompressFormat.JPEG, 90, out);
+            out.flush();
+            out.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 }
