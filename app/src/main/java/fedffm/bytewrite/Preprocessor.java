@@ -12,6 +12,7 @@ import android.util.Log;
 import java.io.CharArrayReader;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -478,11 +479,10 @@ public class Preprocessor {
         // Start by getting the dimensions of one of the characters
         Map<String, Integer> dimensions = getAdjacentCharacterDimensions(original);
 
-        // If the dimensions map is empty, log an error
-        if (dimensions.isEmpty()) {
-            Log.e(PREPROCESSOR, "Error: unable to derive dimensions from segment");
+        // If the dimensions map is empty, the bitmap
+        // cannot be precision-segmented
+        if (dimensions.isEmpty())
             return characters;
-        }
 
             // Get the dimensions from the map
             int x = dimensions.get("x");
@@ -520,15 +520,14 @@ public class Preprocessor {
     }
 
     /**
-     * In the event that a word contains characters which are overlapping
-     * or otherwise directly touching each other, this algorithm will attempt to
-     * approximate the point at which to divide the segment in half
+     * This algorithm will attempt to approximate a
+     * point at which to divide the segment in half
      * (in hopes of producing two characters)
      *
-     *  _________________
-     * |    |   |  |    |
-     * |  W | O | RD    |
-     *  -----------------
+     *  ______              ___  ____
+     * |  |  |   ------>   |  |  |  |
+     * | RD  |   ------>   | R|  |D |
+     *  ------             ----  ----
      *
      * @param bitmap The bitmap image containing the written word
      * @return A list of characters
@@ -536,6 +535,20 @@ public class Preprocessor {
      */
     private static List<Character> divisionSegmentation(Bitmap bitmap) {
         List<Character> characters = new ArrayList<>();
+
+        // Create the first sub-image
+        int x = 0;
+        int y = 0;
+        int w = bitmap.getWidth() / 2;
+        int h = bitmap.getHeight();
+        characters.add(new Character(Bitmap.createBitmap(bitmap, x, y, w, h)));
+
+        // Create the second sub-image
+        x = bitmap.getWidth() / 2;
+        y = 0;
+        w = bitmap.getWidth() / 2;
+        h = bitmap.getHeight();
+        characters.add(new Character(Bitmap.createBitmap(bitmap, x, y, w, h)));
 
         return characters;
     }
@@ -630,40 +643,42 @@ public class Preprocessor {
 
     /**
      * Convert all pixels to either black or white
-     * @param b The greyscaled bitmap image
+     * @param bitmap The greyscaled bitmap image
      * @return The binarized bitmap image
      */
-    public static Bitmap binarize(Bitmap b) {
-        for (int x = 0; x < b.getWidth(); x++) {
-            for (int y = 0; y < b.getHeight(); y++) {
-                int pixel = b.getPixel(x, y);
+    public static Bitmap binarize(Bitmap bitmap) {
+        // Iterate through the bitmap
+        for (int x = 0; x < bitmap.getWidth(); x++) {
+            for (int y = 0; y < bitmap.getHeight(); y++) {
 
-                if (shouldBeBlack(pixel))
-                    b.setPixel(x, y, Color.BLACK);
+                // Determine whether the pixel should be black
+                // or white
+                if (shouldBeBlack(bitmap.getPixel(x, y)))
+                    bitmap.setPixel(x, y, Color.BLACK);
                 else
-                    b.setPixel(x, y, Color.WHITE);
+                    bitmap.setPixel(x, y, Color.WHITE);
             }
         }
-        return b;
+        return bitmap;
     }
 
     /**
      * Crop out all of the excess white background
-     * @param b The original bitmap
+     * @param bitmap The original bitmap
      * @return The cropped bitmap
      */
-    public static Bitmap crop(Bitmap b) {
+    public static Bitmap crop(Bitmap bitmap) {
         // Coordinates
         int xFirst = 0;
         int xLast  = 0;
-        int yFirst = b.getHeight();
+        int yFirst = bitmap.getHeight();
         int yLast  = 0;
 
 
         // Get the column range
-        for (int x = 0; x < b.getWidth(); ++x) {
-            for (int y = 0; y < b.getHeight(); ++y) {
-                if (b.getPixel(x, y) == Color.BLACK) {
+        for (int x = 0; x < bitmap.getWidth(); ++x) {
+            for (int y = 0; y < bitmap.getHeight(); ++y) {
+                if (bitmap.getPixel(x, y) == Color.BLACK) {
                     // Get the first column
                     if (xFirst == 0)
                         xFirst = x;
@@ -682,8 +697,8 @@ public class Preprocessor {
 
         // Get the row range
         for (int x = xFirst; x < xLast; ++x) {
-            for (int y = 0; y < b.getHeight(); ++y) {
-                if (b.getPixel(x, y) == Color.BLACK) {
+            for (int y = 0; y < bitmap.getHeight(); ++y) {
+                if (bitmap.getPixel(x, y) == Color.BLACK) {
                     // Find the top-most black pixel
                     if (y < yFirst)
                         yFirst = y;
@@ -708,9 +723,9 @@ public class Preprocessor {
         int h = yLast - yFirst;
 
         // Create the bitmap
-        b = Bitmap.createBitmap(b, x, y, w, h);
+        bitmap = Bitmap.createBitmap(bitmap, x, y, w, h);
 
-        return b;
+        return bitmap;
     }
 
     /**
@@ -745,12 +760,7 @@ public class Preprocessor {
         Log.i(PREPROCESSOR, "Average segment size:    " + averageSegmentSize + '\n');
 
         // What constitutes an "unusually big" segment size?
-        //    The longer the word, the tighter the threshold will be
-        //    In other words, a shorter word will have a more forgiving threshold
-        //    For example:
-        //       A word with 4  segments will have a threshold of: (averageSegmentSize * 4)
-        //       A word with 10 segments will have a threshold of: (averageSegmentSize * 1.4)
-        float sizeThreshold = (float)(averageSegmentSize * 2.0);
+        float sizeThreshold = (float)(averageSegmentSize * 1.75);
         Log.i(PREPROCESSOR, "Size threshold:          " + sizeThreshold);
 
         // Are any of the segments unusually big? If so, the segment
@@ -759,16 +769,22 @@ public class Preprocessor {
             // If an unusually big segment is detected, we pass it off to
             // be precision-segmented, and update the list of characters
             // with the newly-returned sub-segments
-            if ((segmentSizes.get(i) - sizeThreshold) >= .5) {
+            if (segmentSizes.get(i) > sizeThreshold) {
                 Log.e(PREPROCESSOR, "The size of segment " + (i + 1) + " is " + segmentSizes.get(i));
 
                 // Perform precision segmentation on the large segment
                 List <Character> segmentedCharacters = precisionSegmentation(characters.get(i).getBitmap());
 
-                // Detect an unsuccessful precision segmentation
+                // Detect unsuccessful precision segmentation
                 if (segmentedCharacters.isEmpty()) {
-                    Log.e(PREPROCESSOR, "Error: precision segmentation failed. Different segmentation method required");
-                    continue;
+                    Log.e(PREPROCESSOR, "Error: precision segmentation failed. Performing division segmentation...");
+
+                    // Attempt to perform division segmentation
+                    segmentedCharacters = divisionSegmentation((characters.get(i).getBitmap()));
+                    if (segmentedCharacters.isEmpty()) {
+                        Log.e(PREPROCESSOR, "Error: division segmentation failed.");
+                        continue;
+                    }
                 }
 
                 // Because we are turning one segment into two smaller segments,
