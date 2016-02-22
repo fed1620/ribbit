@@ -60,4 +60,23 @@
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true" />
 
+    <Button
+        style="?android:attr/buttonStyleSmall"
+        android:onClick="loadCharacterSample"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/sampleButton"
+        android:id="@+id/sampleButton"
+        android:layout_below="@+id/button"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="59dp" />
+
+    <ImageView
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:id="@+id/sampleImage"
+        android:layout_alignTop="@+id/textView"
+        android:layout_centerHorizontal="true"
+        android:contentDescription="@string/sampleDescription" />
+
 </RelativeLayout>

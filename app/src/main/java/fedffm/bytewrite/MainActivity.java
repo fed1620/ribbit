@@ -1,8 +1,10 @@
 package fedffm.bytewrite;
 
 import android.content.Intent;
+import android.content.res.AssetManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -17,6 +19,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -28,13 +32,17 @@ public class MainActivity extends ActionBarActivity {
     private static boolean DETAILED_LOGGING = false;
 
     // Main Activity views
-    private String imagePath = "";
+    private String    imagePath = "";
     private Bitmap    bitmap;
     private ImageView image;
     private TextView  instructions;
-    private Button processButton;
-    private Button retakeButton;
+    private Button    processButton;
+    private Button    retakeButton;
     private Button    cameraButton;
+
+    // Sample views
+    private Button    sampleButton;
+    private ImageView sampleImage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -132,15 +140,42 @@ public class MainActivity extends ActionBarActivity {
         processButton = (Button)findViewById(R.id.processButton);
         retakeButton  = (Button)findViewById(R.id.retakeButton);
         instructions  = (TextView)findViewById(R.id.textView);
+        sampleButton  = (Button)findViewById(R.id.sampleButton);
+        sampleImage   = (ImageView)findViewById(R.id.sampleImage);
 
         // Visible views
         cameraButton.setVisibility(View.VISIBLE);
         instructions.setVisibility(View.VISIBLE);
+        sampleButton.setVisibility(View.VISIBLE);
 
         // Invisible views
         image.setVisibility(View.INVISIBLE);
         processButton.setVisibility(View.INVISIBLE);
         retakeButton.setVisibility(View.INVISIBLE);
+        sampleImage.setVisibility(View.INVISIBLE);
+    }
+
+    /**
+     * Load a character from the sample base
+     */
+    public void loadCharacterSample(View view) {
+        AssetManager assetManager = getAssets();
+
+        // Get the name of the file
+        String fileName = "characters/t/2.jpg";
+
+        InputStream istr = null;
+        try {
+            istr = assetManager.open(fileName);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        Bitmap bitmap = BitmapFactory.decodeStream(istr);
+
+        sampleImage.setVisibility(View.VISIBLE);
+        sampleImage.setImageBitmap(bitmap);
+
     }
 
     /**
