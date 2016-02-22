@@ -159,22 +159,6 @@ public class MainActivity extends ActionBarActivity {
      * Load a character from the sample base
      */
     public void loadCharacterSample(View view) {
-        AssetManager assetManager = getAssets();
-
-        // Get the name of the file
-        String fileName = "characters/t/2.jpg";
-
-        InputStream istr = null;
-        try {
-            istr = assetManager.open(fileName);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        Bitmap bitmap = BitmapFactory.decodeStream(istr);
-
-        sampleImage.setVisibility(View.VISIBLE);
-        sampleImage.setImageBitmap(bitmap);
 
     }
 
