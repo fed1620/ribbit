@@ -62,14 +62,13 @@
 
     <Button
         style="?android:attr/buttonStyleSmall"
-        android:onClick="loadSamplePool"
+        android:onClick="displaySamples"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/sampleButton"
         android:id="@+id/sampleButton"
-        android:layout_below="@+id/button"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="59dp" />
+        android:layout_alignTop="@+id/imageView"
+        android:layout_centerHorizontal="true" />
 
     <ImageView
         android:layout_width="100dp"
@@ -78,5 +77,20 @@
         android:layout_alignTop="@+id/textView"
         android:layout_centerHorizontal="true"
         android:contentDescription="@string/sampleDescription" />
+
+    <HorizontalScrollView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/sampleScrollView"
+        android:layout_alignTop="@+id/textView"
+        android:layout_centerHorizontal="true" >
+
+        <LinearLayout
+            android:id="@+id/sampleGallery"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+    </HorizontalScrollView>
 
 </RelativeLayout>

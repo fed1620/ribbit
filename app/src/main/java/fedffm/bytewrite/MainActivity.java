@@ -14,6 +14,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.io.File;
@@ -217,16 +218,38 @@ public class MainActivity extends ActionBarActivity {
     }
 
     /**
-     * Load a character from the sample base
+     * Preview the character samples
      */
-    public void loadSamplePool(View view) {
-        // Instantiate a sample pool
-        SamplePool pool = new SamplePool(this);
+    public void displaySamples(View view) {
+        // Get the reference to the sample gallery
+        LinearLayout sampleGallery = (LinearLayout)findViewById(R.id.sampleGallery);
 
-        List<Character> characters = pool.getAllCharacterSamples();
+        // Load the character base
+        List<Character> characters = new CharacterBase(this).getAllCharacterSamples();
 
-        for (int i = 0; i < characters.size(); ++i) {
-            Log.i(MAIN_ACTIVITY, "Character: " + characters.get(i).getName() + " ASCII: " + characters.get(i).getAscii());
-        }
+        // Display each character segment image in the linear layout
+        for (int i = 0; i < characters.size(); ++i)
+            sampleGallery.addView(getImageView(characters.get(i).getBitmap()));
+
+        // Make sure the image gallery is visible
+        sampleGallery.setVisibility(View.VISIBLE);
+    }
+
+    /**
+     * Create an image view from a bitmap
+     * @param b the bitmap
+     * @return ImageView
+     */
+    private View getImageView(Bitmap b) {
+        ImageView imageView = new ImageView(getApplicationContext());
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        lp.setMargins(0, 0, 20, 0);
+        imageView.setLayoutParams(lp);
+        imageView.setImageBitmap(b);
+
+        return imageView;
     }
 }
+
+
