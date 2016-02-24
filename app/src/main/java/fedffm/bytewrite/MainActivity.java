@@ -1,10 +1,8 @@
 package fedffm.bytewrite;
 
 import android.content.Intent;
-import android.content.res.AssetManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -19,10 +17,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 
@@ -156,13 +153,6 @@ public class MainActivity extends ActionBarActivity {
     }
 
     /**
-     * Load a character from the sample base
-     */
-    public void loadCharacterSample(View view) {
-
-    }
-
-    /**
      * Use the device's built in camera to capture an image
      */
     public void launchCamera(View view) {
@@ -224,5 +214,19 @@ public class MainActivity extends ActionBarActivity {
         Intent intent = new Intent(this, ProcessActivity.class);
         intent.putExtra("imagePath", imagePath);
         startActivity(intent);
+    }
+
+    /**
+     * Load a character from the sample base
+     */
+    public void loadSamplePool(View view) {
+        // Instantiate a sample pool
+        SamplePool pool = new SamplePool(this);
+
+        List<Character> characters = pool.getAllCharacterSamples();
+
+        for (int i = 0; i < characters.size(); ++i) {
+            Log.i(MAIN_ACTIVITY, "Character: " + characters.get(i).getName() + " ASCII: " + characters.get(i).getAscii());
+        }
     }
 }

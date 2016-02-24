@@ -106,7 +106,7 @@ public class ProcessActivity extends ActionBarActivity {
     public void segment(View view) {
         // Get the list of unidentified characters
         List<Character> characters = Preprocessor.segmentCharacters(bitmap);
-        saveSegments(characters);
+//        saveSegments(characters);
 
         // Display each character segment image in the linear layout
         for (int i = 0; i < characters.size(); ++i) {
