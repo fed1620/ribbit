@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v7.app.ActionBarActivity;
@@ -15,6 +16,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.io.File;
@@ -23,24 +25,81 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+/**********************************************************************************************
+ *                                   Main Activity
+ **********************************************************************************************/
 
 public class MainActivity extends ActionBarActivity {
     private static final int REQUEST_IMAGE_CAPTURE = 1;
-    private static final String MAIN_ACTIVITY = "MainActivity";  // Log tag
+    private static final String LOG_TAG = "MainActivity";  // Log tag
     private static boolean DETAILED_LOGGING = false;
 
     // Main Activity views
     private String    imagePath = "";
-    private Bitmap    bitmap;
     private ImageView image;
     private TextView  instructions;
     private Button    processButton;
     private Button    retakeButton;
     private Button    cameraButton;
 
-    // Sample views
-    private Button    sampleButton;
-    private ImageView sampleImage;
+    // Character base
+    private List<Character> characters;
+    private boolean taskRunning = false;
+
+    /**********************************************************************************************
+     *                       ASYNC TASK: CharacterBase Loader
+     **********************************************************************************************/
+
+    /**
+     * Because loading the CharacterBase may take a while, do it on an AsyncTask
+     */
+    class CharacterBaseLoader extends AsyncTask<String, Void, String> {
+        // Get references to the loading elements
+        TextView loading = (TextView) findViewById(R.id.loading);
+        ProgressBar progressBar = (ProgressBar) findViewById(R.id.progressBar);
+
+        @Override
+        protected void onPreExecute() {
+            if (DETAILED_LOGGING) {
+                loading.setText("Loading character base...");
+                loading.setVisibility(View.VISIBLE);
+                progressBar.setVisibility(View.VISIBLE);
+            }
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+            try {
+                taskRunning = true;
+
+                // Instantiate the singleton character base
+                CharacterBase characterBase = CharacterBase.getInstance(MainActivity.this);
+                characters = characterBase.getAllCharacterSamples();
+                Log.i(LOG_TAG, characters.size() + " / " + characterBase.size() + " loaded");
+
+            } catch (Exception e) {
+                Log.e("LongOperation", "Interrupted", e);
+                return "Interrupted";
+            }
+            return "Finished executing AsyncTask: Load";
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            if (DETAILED_LOGGING) {
+                loading.setVisibility(View.INVISIBLE);
+                progressBar.setVisibility(View.INVISIBLE);
+            }
+
+            // Tell the activity that we have finished
+            Log.i(LOG_TAG, result);
+            taskRunning = false;
+        }
+    }
+
+/**********************************************************************************************
+ *                                   Main Activity
+ **********************************************************************************************/
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,13 +107,16 @@ public class MainActivity extends ActionBarActivity {
         setContentView(R.layout.activity_main);
 
         if (DETAILED_LOGGING)
-            Log.i(MAIN_ACTIVITY, "onCreate() fired");
+            Log.i(LOG_TAG, "onCreate() fired");
 
         // If an image exists, load it
         if (loadImage())
             confirm();
         else
             setupViews();
+
+        // Load the character base as an async task
+        new CharacterBaseLoader().execute();
     }
 
     @Override
@@ -97,35 +159,35 @@ public class MainActivity extends ActionBarActivity {
     protected void onDestroy() {
         super.onDestroy();
         if (DETAILED_LOGGING)
-            Log.i(MAIN_ACTIVITY, "MainActivity has been destroyed");
+            Log.i(LOG_TAG, "MainActivity has been destroyed");
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         if (DETAILED_LOGGING)
-            Log.i(MAIN_ACTIVITY, "MainActivity has been paused");
+            Log.i(LOG_TAG, "MainActivity has been paused");
     }
 
     @Override
     protected void onStop() {
         super.onStop();
         if (DETAILED_LOGGING)
-            Log.i(MAIN_ACTIVITY, "MainActivity has been stopped");
+            Log.i(LOG_TAG, "MainActivity has been stopped");
     }
 
     @Override
     protected void onStart() {
         super.onStart();
         if (DETAILED_LOGGING)
-            Log.i(MAIN_ACTIVITY, "MainActivity has been started");
+            Log.i(LOG_TAG, "MainActivity has been started");
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         if (DETAILED_LOGGING)
-            Log.i(MAIN_ACTIVITY, "MainActivity has been resumed");
+            Log.i(LOG_TAG, "MainActivity has been resumed");
     }
 
     /**
@@ -138,8 +200,8 @@ public class MainActivity extends ActionBarActivity {
         processButton = (Button)findViewById(R.id.processButton);
         retakeButton  = (Button)findViewById(R.id.retakeButton);
         instructions  = (TextView)findViewById(R.id.textView);
-        sampleButton  = (Button)findViewById(R.id.sampleButton);
-        sampleImage   = (ImageView)findViewById(R.id.sampleImage);
+        Button sampleButton = (Button) findViewById(R.id.sampleButton);
+        ImageView sampleImage = (ImageView) findViewById(R.id.sampleImage);
 
         // Visible views
         cameraButton.setVisibility(View.VISIBLE);
@@ -181,10 +243,10 @@ public class MainActivity extends ActionBarActivity {
 
         // Log the path to the image
         if (DETAILED_LOGGING)
-            Log.i(MAIN_ACTIVITY, "The path to the image is: " + imagePath);
+            Log.i(LOG_TAG, "The path to the image is: " + imagePath);
 
         // Load the bitmap
-        bitmap = Preprocessor.load(imagePath);
+        Bitmap bitmap = Preprocessor.load(imagePath);
 
         // Put it into the Image View
         image = (ImageView) findViewById(R.id.imageView);
@@ -221,17 +283,20 @@ public class MainActivity extends ActionBarActivity {
      * Preview the character samples
      */
     public void displaySamples(View view) {
+        if (taskRunning) {
+            Log.e(LOG_TAG, "Error: task still in progress");
+            return;
+        }
+
         // Get the reference to the sample gallery
         LinearLayout sampleGallery = (LinearLayout)findViewById(R.id.sampleGallery);
-
-        // Load the character base
-        List<Character> characters = new CharacterBase(this).getAllCharacterSamples();
 
         // Display each character segment image in the linear layout
         for (int i = 0; i < characters.size(); ++i)
             sampleGallery.addView(getImageView(characters.get(i).getBitmap()));
 
         // Make sure the image gallery is visible
+        instructions.setVisibility(View.INVISIBLE);
         sampleGallery.setVisibility(View.VISIBLE);
     }
 

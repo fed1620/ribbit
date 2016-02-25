@@ -27,6 +27,7 @@
         android:layout_centerHorizontal="true" />
 
     <TextView
+        android:textColor="@color/primary_material_light"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
@@ -92,5 +93,25 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
     </HorizontalScrollView>
+
+    <TextView
+        android:textColor="@color/primary_material_light"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="@string/loadingCharBase"
+        android:id="@+id/loading"
+        android:layout_alignBottom="@+id/sampleImage"
+        android:layout_centerHorizontal="true"
+        android:visibility="invisible" />
+
+    <ProgressBar
+        style="?android:attr/progressBarStyleLarge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/progressBar"
+        android:layout_above="@+id/button"
+        android:layout_centerHorizontal="true"
+        android:visibility="invisible" />
 
 </RelativeLayout>

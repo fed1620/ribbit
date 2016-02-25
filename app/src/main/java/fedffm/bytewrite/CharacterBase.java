@@ -10,15 +10,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CharacterBase {
-    // Log tag
-    private final static String CHARACTER_BASE = "CharacterBase";
-    private final static String ASSET_FOLDER = "characters";
+    // Singleton (so that we only have to instantiate
+    // the character base one time
+    private static CharacterBase instance = null;
 
-    // The list of known characters
-    private List<Character> characters;
-    private Context context;
-
-    public CharacterBase(Context context) {
+    // Prevent instantiation outside of this class
+    private CharacterBase(Context context) {
         // Initialize the member variables
         this.characters = new ArrayList<>();
         this.context    = context;
@@ -26,6 +23,21 @@ public class CharacterBase {
         // Load the assets
         createCharacters(ASSET_FOLDER);
     }
+
+    // Return the instance of this class
+    public static CharacterBase getInstance(Context context) {
+        if (instance == null)
+            instance = new CharacterBase(context);
+        return instance;
+    }
+
+    // Log tag
+    private final static String LOG_TAG = "CharacterBase";
+    private final static String ASSET_FOLDER = "characters";
+
+    // The list of known characters
+    private List<Character> characters;
+    private Context context;
 
     /**
      * Store the path to each asset in the list
@@ -129,5 +141,5 @@ public class CharacterBase {
      * How big is our sample pool?
      * @return Return the number of samples
      */
-    private int size() { return this.characters.size(); }
+    public int size() { return this.characters.size(); }
 }

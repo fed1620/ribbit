@@ -15,4 +15,5 @@
     <string name="title_activity_process">Process</string>
     <string name="segmentButton">Segment</string>
     <string name="precisionButton">Precision Segment</string>
+    <string name="loadingCharBase">Loading Character Base...</string>
 </resources>
