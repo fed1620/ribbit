@@ -75,13 +75,12 @@ public class MainActivity extends ActionBarActivity {
                 // Instantiate the singleton character base
                 CharacterBase characterBase = CharacterBase.getInstance(MainActivity.this);
                 characters = characterBase.getAllCharacterSamples();
-                Log.i(LOG_TAG, characters.size() + " / " + characterBase.size() + " loaded");
 
             } catch (Exception e) {
                 Log.e("LongOperation", "Interrupted", e);
                 return "Interrupted";
             }
-            return "Finished executing AsyncTask: Load";
+            return characters.size() + " / " + CharacterBase.getInstance(MainActivity.this).size() + " samples loaded";
         }
 
         @Override
@@ -116,7 +115,8 @@ public class MainActivity extends ActionBarActivity {
             setupViews();
 
         // Load the character base as an async task
-        new CharacterBaseLoader().execute();
+        if (!taskRunning)
+            new CharacterBaseLoader().execute();
     }
 
     @Override
@@ -200,19 +200,15 @@ public class MainActivity extends ActionBarActivity {
         processButton = (Button)findViewById(R.id.processButton);
         retakeButton  = (Button)findViewById(R.id.retakeButton);
         instructions  = (TextView)findViewById(R.id.textView);
-        Button sampleButton = (Button) findViewById(R.id.sampleButton);
-        ImageView sampleImage = (ImageView) findViewById(R.id.sampleImage);
 
         // Visible views
         cameraButton.setVisibility(View.VISIBLE);
         instructions.setVisibility(View.VISIBLE);
-        sampleButton.setVisibility(View.VISIBLE);
 
         // Invisible views
         image.setVisibility(View.INVISIBLE);
         processButton.setVisibility(View.INVISIBLE);
         retakeButton.setVisibility(View.INVISIBLE);
-        sampleImage.setVisibility(View.INVISIBLE);
     }
 
     /**
@@ -277,43 +273,6 @@ public class MainActivity extends ActionBarActivity {
         Intent intent = new Intent(this, ProcessActivity.class);
         intent.putExtra("imagePath", imagePath);
         startActivity(intent);
-    }
-
-    /**
-     * Preview the character samples
-     */
-    public void displaySamples(View view) {
-        if (taskRunning) {
-            Log.e(LOG_TAG, "Error: task still in progress");
-            return;
-        }
-
-        // Get the reference to the sample gallery
-        LinearLayout sampleGallery = (LinearLayout)findViewById(R.id.sampleGallery);
-
-        // Display each character segment image in the linear layout
-        for (int i = 0; i < characters.size(); ++i)
-            sampleGallery.addView(getImageView(characters.get(i).getBitmap()));
-
-        // Make sure the image gallery is visible
-        instructions.setVisibility(View.INVISIBLE);
-        sampleGallery.setVisibility(View.VISIBLE);
-    }
-
-    /**
-     * Create an image view from a bitmap
-     * @param b the bitmap
-     * @return ImageView
-     */
-    private View getImageView(Bitmap b) {
-        ImageView imageView = new ImageView(getApplicationContext());
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
-        lp.setMargins(0, 0, 20, 0);
-        imageView.setLayoutParams(lp);
-        imageView.setImageBitmap(b);
-
-        return imageView;
     }
 }
 

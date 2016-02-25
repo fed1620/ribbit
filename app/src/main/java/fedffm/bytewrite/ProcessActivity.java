@@ -23,9 +23,13 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 
+/**********************************************************************************************
+ *                                   Process Activity
+ **********************************************************************************************/
 
 public class ProcessActivity extends ActionBarActivity {
-    private static final String PROCESS_ACTIVITY = "ProcessActivity"; // Log Tag
+    private static final String LOG_TAG = "ProcessActivity"; // Log Tag
+    private static final String IMAGE   = "imagePath";
 
     // The captured image
     private Bitmap bitmap;
@@ -66,6 +70,9 @@ public class ProcessActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    /**
+     * Get references to the activity's views and set their visibility
+     */
     private void setupViews() {
         // Prepare the image view
         image = (ImageView) findViewById(R.id.imageViewProcess);
@@ -85,7 +92,7 @@ public class ProcessActivity extends ActionBarActivity {
      */
     private void loadImage() {
         // Load the bitmap
-        bitmap = Preprocessor.load(getIntent().getStringExtra("imagePath"));
+        bitmap = Preprocessor.load(getIntent().getStringExtra(IMAGE));
     }
 
     /**
@@ -106,12 +113,14 @@ public class ProcessActivity extends ActionBarActivity {
     public void segment(View view) {
         // Get the list of unidentified characters
         List<Character> characters = Preprocessor.segmentCharacters(bitmap);
-//        saveSegments(characters);
 
         // Display each character segment image in the linear layout
         for (int i = 0; i < characters.size(); ++i) {
             imageGallery.addView(getImageView(characters.get(i).getBitmap()));
         }
+
+        // Attempt to identify the first character...
+        Character identified = Identifier.identify(characters.get(0), this);
 
         // Make sure the image gallery is visible
         imageGallery.setVisibility(View.VISIBLE);
@@ -132,6 +141,10 @@ public class ProcessActivity extends ActionBarActivity {
 
         return imageView;
     }
+
+/**********************************************************************************************
+ *                             (For generating new character samples)
+ **********************************************************************************************/
 
     /**
      * Generate our character pool
