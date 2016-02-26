@@ -1,5 +1,6 @@
 package fedffm.bytewrite;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Word {
@@ -14,7 +15,7 @@ public class Word {
 
     // Default
     Word() {
-        this.characters = null;
+        this.characters = new ArrayList<>();
         this.size = 0;
     }
 
@@ -29,8 +30,8 @@ public class Word {
      * @param character The new character
      */
     public void addCharacter(Character character) {
-        characters.add(character);
-        setSize(characters.size());
+        this.characters.add(character);
+        setSize(this.characters.size());
     }
 
     /**
@@ -41,4 +42,17 @@ public class Word {
         return this.size;
     }
 
+    /**
+     * Display the word
+     */
+    public String getString() {
+        String string = "";
+
+        // Add each character to the string
+        for (Character character: this.characters) {
+            string += character.getName();
+        }
+
+        return string;
+    }
 }

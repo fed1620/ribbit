@@ -9,11 +9,13 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.text.Editable;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -35,7 +37,8 @@ public class MainActivity extends ActionBarActivity {
     private static boolean DETAILED_LOGGING = false;
 
     // Main Activity views
-    private String    imagePath = "";
+    private Bitmap    bitmap;
+    private EditText  textBox;
     private ImageView image;
     private TextView  instructions;
     private Button    processButton;
@@ -43,8 +46,10 @@ public class MainActivity extends ActionBarActivity {
     private Button    cameraButton;
 
     // Character base
-    private List<Character> characters;
+    private CharacterBase characterBase;
     private boolean taskRunning = false;
+    private String    imagePath = "";
+
 
     /**********************************************************************************************
      *                       ASYNC TASK: CharacterBase Loader
@@ -54,26 +59,21 @@ public class MainActivity extends ActionBarActivity {
      * Because loading the CharacterBase may take a while, do it on an AsyncTask
      */
     class CharacterBaseLoader extends AsyncTask<String, Void, String> {
-        // Get references to the loading elements
-        TextView loading = (TextView) findViewById(R.id.loading);
-        ProgressBar progressBar = (ProgressBar) findViewById(R.id.progressBar);
 
         @Override
         protected void onPreExecute() {
-            if (DETAILED_LOGGING) {
-                loading.setText("Loading character base...");
-                loading.setVisibility(View.VISIBLE);
-                progressBar.setVisibility(View.VISIBLE);
-            }
         }
 
         @Override
         protected String doInBackground(String... params) {
+            // Make sure we're pulling characters from the character base
+            List<Character> characters;
+
             try {
                 taskRunning = true;
 
                 // Instantiate the singleton character base
-                CharacterBase characterBase = CharacterBase.getInstance(MainActivity.this);
+                characterBase = CharacterBase.getInstance(MainActivity.this);
                 characters = characterBase.getAllCharacterSamples();
 
             } catch (Exception e) {
@@ -85,6 +85,50 @@ public class MainActivity extends ActionBarActivity {
 
         @Override
         protected void onPostExecute(String result) {
+            // Tell the activity that we have finished
+            Log.i(LOG_TAG, result);
+            taskRunning = false;
+        }
+    }
+
+    /**********************************************************************************************
+     *                       ASYNC TASK: Processor
+     **********************************************************************************************/
+
+    /**
+     * Because loading the CharacterBase may take a while, do it on an AsyncTask
+     */
+    class Processor extends AsyncTask<String, Void, String> {
+        // Get references to the loading elements
+        TextView loading = (TextView) findViewById(R.id.loading);
+        ProgressBar progressBar = (ProgressBar) findViewById(R.id.progressBar);
+
+        @Override
+        protected void onPreExecute() {
+            if (DETAILED_LOGGING) {
+                loading.setText("Processing...");
+                loading.setVisibility(View.VISIBLE);
+                progressBar.setVisibility(View.VISIBLE);
+            }
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+            try {
+//                taskRunning = true;
+
+                // Begin the image processing
+                process();
+
+            } catch (Exception e) {
+                Log.e("LongOperation", "Interrupted", e);
+                return "Interrupted";
+            }
+            return "Processing complete";
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
             if (DETAILED_LOGGING) {
                 loading.setVisibility(View.INVISIBLE);
                 progressBar.setVisibility(View.INVISIBLE);
@@ -92,7 +136,7 @@ public class MainActivity extends ActionBarActivity {
 
             // Tell the activity that we have finished
             Log.i(LOG_TAG, result);
-            taskRunning = false;
+//            taskRunning = false;
         }
     }
 
@@ -200,15 +244,7 @@ public class MainActivity extends ActionBarActivity {
         processButton = (Button)findViewById(R.id.processButton);
         retakeButton  = (Button)findViewById(R.id.retakeButton);
         instructions  = (TextView)findViewById(R.id.textView);
-
-        // Visible views
-        cameraButton.setVisibility(View.VISIBLE);
-        instructions.setVisibility(View.VISIBLE);
-
-        // Invisible views
-        image.setVisibility(View.INVISIBLE);
-        processButton.setVisibility(View.INVISIBLE);
-        retakeButton.setVisibility(View.INVISIBLE);
+        textBox       = (EditText)findViewById(R.id.content);
     }
 
     /**
@@ -242,7 +278,7 @@ public class MainActivity extends ActionBarActivity {
             Log.i(LOG_TAG, "The path to the image is: " + imagePath);
 
         // Load the bitmap
-        Bitmap bitmap = Preprocessor.load(imagePath);
+        bitmap = Preprocessor.load(imagePath);
 
         // Put it into the Image View
         image = (ImageView) findViewById(R.id.imageView);
@@ -266,13 +302,38 @@ public class MainActivity extends ActionBarActivity {
 
     /**
      * Go to the Process Activity
+     */
+    private void process() {
+        // Convert the bitmap to greyscale, binarize, and crop
+        bitmap = Preprocessor.greyscale(bitmap);
+        bitmap = Preprocessor.binarize(bitmap);
+        bitmap = Preprocessor.crop(bitmap);
+
+        // The word containing unidentified characters
+        final Word word = Identifier.identify(new Word(Preprocessor.segmentCharacters(bitmap)), this);
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+            // Display it
+            textBox.setText(word.getString());
+            textBox.setVisibility(View.VISIBLE);
+            }
+        });
+
+    }
+
+    /**
+     * Start the processing AsyncTask
      * @param view The button that was pressed
      */
-    public void process(View view) {
-        // Start a new intent
-        Intent intent = new Intent(this, ProcessActivity.class);
-        intent.putExtra("imagePath", imagePath);
-        startActivity(intent);
+    public void startProcessing(View view) {
+        image.setVisibility(View.INVISIBLE);
+        instructions.setVisibility(View.INVISIBLE);
+        processButton.setVisibility(View.INVISIBLE);
+        retakeButton.setVisibility(View.INVISIBLE);
+
+        new Processor().execute();
     }
 }
 

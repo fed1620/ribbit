@@ -2,6 +2,7 @@ package fedffm.bytewrite;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.util.Log;
 
 import java.util.List;
@@ -36,52 +37,104 @@ public class Identifier {
      */
     private static float computeSimilarity(Bitmap sampleCharacter, Bitmap unknownCharacterScaled) {
         // Ensure that the two bitmaps are the exact same size. This is critical
-        assert (sampleCharacter.getWidth()  == unknownCharacterScaled.getWidth());
-        assert (sampleCharacter.getHeight() == unknownCharacterScaled.getHeight());
+        if (sampleCharacter.getWidth() != unknownCharacterScaled.getWidth() ||
+            sampleCharacter.getHeight() != unknownCharacterScaled.getHeight())
+                return (float)0.0;
+
+        // Store the width and height in a variable for easy reference
         int width  = sampleCharacter.getWidth();
         int height = sampleCharacter.getHeight();
 
         // Store how many pixels there are and how many matching pixels there are
-        int pixels = width * height;
+        int blackPixels = 0;
         int matchingPixels = 0;
 
+        // Iterate through the bitmap
         for (int x = 0; x < width; ++x)
             for (int y = 0; y < height; ++y) {
-                if (sampleCharacter.getPixel(x, y) == unknownCharacterScaled.getPixel(x, y))
-                    matchingPixels++;
+                // How many black pixels are in the sample bitmap?
+                if (sampleCharacter.getPixel(x, y) == Color.BLACK) {
+                    blackPixels++;
+                    // If the unknown character also has a black pixel at the
+                    // same location, we have found a match!
+                    if  (unknownCharacterScaled.getPixel(x, y) == Color.BLACK)
+                        matchingPixels++;
+                }
             }
-        Log.i(LOG_TAG, "Out of " + pixels + " pixels, " + matchingPixels + " are a match");
-        Log.i(LOG_TAG, "Similarity: " + ((float)matchingPixels / (float)pixels));
-        return ((float)matchingPixels / (float)pixels);
+
+        //   0.0 == the two characters are completely different
+        // 100.0 == the two characters are an identical match
+        return ((float)matchingPixels / (float)blackPixels) * (float)100.00;
     }
 
     /**
-     * Identify a character
+     * Identify a single character
      * @param unknown The character to be identified
      * @return The character updated with a name and ASCII code
      */
     public static Character identify(Character unknown, Context context) {
         // Start by getting the entire character base
-        List<Character> characters = CharacterBase.getInstance(context).getAllCharacterSamples();
-        Bitmap unknownScaled;
+        List<Character> characterBase = CharacterBase.getInstance(context).getAllCharacterSamples();
 
         // Use these to find the greatest similarity
-        float similarity         = (float)0.0;
+        float similarity;
         float greatestSimilarity = (float)0.0;
+        int matchIndex = 0;
 
-        // Compare against each of them
-        for (int i = 0; i < characters.size(); ++i) {
-            unknownScaled = matchSize(characters.get(i).getBitmap(), unknown.getBitmap());
-            similarity = computeSimilarity(characters.get(i).getBitmap(), unknownScaled);
+        // Compare our unknown character against every character in the CharacterBase
+        for (int i = 0; i < characterBase.size(); ++i) {
+            Bitmap unknownScaled = matchSize(characterBase.get(i).getBitmap(), unknown.getBitmap());
+            similarity = computeSimilarity(characterBase.get(i).getBitmap(), unknownScaled);
 
             // Which of the two character bitmaps are most similar?
-            if (similarity > greatestSimilarity)
+            if (similarity > greatestSimilarity) {
                 greatestSimilarity = similarity;
+                matchIndex = i;
+            }
         }
 
-        //TODO: This returns the very last similarity score, not the greatest...
-        Log.i(LOG_TAG, "Greatest similarity: " + (similarity * 100.00) + "%");
-        return new Character();
+        Log.i(LOG_TAG, "Greatest similarity: " + characterBase.get(matchIndex).getName() +
+                " with a score of : " + (greatestSimilarity) + "%");
+        return characterBase.get(matchIndex);
     }
 
+    /**
+     * Identify a character
+     * @param unknownWord The Word to be identified
+     * @return A Word consisting of identified characters
+     */
+    public static Word identify(Word unknownWord, Context context) {
+        // Start by getting the reference to the entire character base
+        List<Character> characterBase = CharacterBase.getInstance(context).getAllCharacterSamples();
+
+        // Instantiate what will be our word
+        Word word = new Word();
+
+        // Examine each character in the word
+        for (Character unknownCharacter : unknownWord.getCharacters()) {
+            // Use these to find the greatest similarity
+            float similarity;
+            float greatestSimilarity = (float)0.0;
+            int   matchIndex = 0;
+
+            // Compare our unknown character against every character in the CharacterBase
+            for (int i = 0; i < characterBase.size(); ++i) {
+                Bitmap unknownScaled = matchSize(characterBase.get(i).getBitmap(), unknownCharacter.getBitmap());
+                similarity = computeSimilarity(characterBase.get(i).getBitmap(), unknownScaled);
+
+                // Which of the two character bitmaps are most similar?
+                if (similarity > greatestSimilarity) {
+                    greatestSimilarity = similarity;
+                    matchIndex = i;
+                }
+            }
+            // Add each character to the word we are building
+            word.addCharacter(characterBase.get(matchIndex));
+
+            // Log the similarity score for each character
+            Log.i(LOG_TAG, "Greatest similarity: " + characterBase.get(matchIndex).getName() +
+                           " with a score of : " + (greatestSimilarity) + "%");
+        }
+        return word;
+    }
 }
