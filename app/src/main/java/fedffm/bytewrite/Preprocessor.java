@@ -16,20 +16,17 @@ import java.util.List;
 import java.util.Map;
 
 public class Preprocessor {
-    private static final String PREPROCESSOR = "Preprocessor";
-    private static final double THRESHOLD = 0.6;
-    private static boolean LOGGING_ENABLED = true;
+    private static final String LOG_TAG = "Preprocessor";
     private static boolean DETAILED_LOGGING = false;
+    private static final double THRESHOLD = 0.6;
 
     /**
-     * The goal is for each letter bitmap to have the same height and width
-     * @param segment The bitmap image containing a single character
-     * @return Returns the scaled bitmap image
+     * Determine whether a set of coordinates are within the bounds of a given bitmap
+     * @param x the column in the bitmap
+     * @param y the row in the bitmap
+     * @param bitmap the image
+     * @return False if the coordinates are out of range
      */
-    private Bitmap scaleSegment(Bitmap segment) {
-        return segment;
-    }
-
     private static boolean withinBounds(int x, int y, Bitmap bitmap) {
         return (x < bitmap.getWidth()  && x >= 0 && y < bitmap.getHeight() && y >= 0);
     }
@@ -128,8 +125,8 @@ public class Preprocessor {
             // Log pixel count and column count
             if (DETAILED_LOGGING) {
                 if (columnCount != 0)
-                    Log.e(PREPROCESSOR, "Iterating column count to " + columnCount);
-                Log.i(PREPROCESSOR, pixels + " pixels in column " + x);
+                    Log.e(LOG_TAG, "Iterating column count to " + columnCount);
+                Log.i(LOG_TAG, pixels + " pixels in column " + x);
             }
 
             // If a column of white pixels is detected
@@ -158,16 +155,16 @@ public class Preprocessor {
         //    2. Size of map (should match # of characters)
         //    3. Width of each character (obtained from map)
         if (DETAILED_LOGGING) {
-            Log.i(PREPROCESSOR, (characterCount + 1) +  " characters detected");
-            Log.i(PREPROCESSOR, "Size of map: " + characterWidth.size());
+            Log.i(LOG_TAG, (characterCount + 1) +  " characters detected");
+            Log.i(LOG_TAG, "Size of map: " + characterWidth.size());
 
             for (int i = 0; i <= characterCount; ++i) {
-                Log.i(PREPROCESSOR, "-------------------------------------------------------------");
-                Log.i(PREPROCESSOR, "-------------------------------------------------------------");
-                Log.i(PREPROCESSOR, "Character number " + (i + 1) + ":");
-                Log.i(PREPROCESSOR, "began at (x = " + characterX.get(i) + ", (y = " + characterY.get(i) + ")");
-                Log.i(PREPROCESSOR, "was " + characterWidth.get(i) + " pixels wide");
-                Log.i(PREPROCESSOR, "and " + characterHeight.get(i) + " pixels tall");
+                Log.i(LOG_TAG, "-------------------------------------------------------------");
+                Log.i(LOG_TAG, "-------------------------------------------------------------");
+                Log.i(LOG_TAG, "Character number " + (i + 1) + ":");
+                Log.i(LOG_TAG, "began at (x = " + characterX.get(i) + ", (y = " + characterY.get(i) + ")");
+                Log.i(LOG_TAG, "was " + characterWidth.get(i) + " pixels wide");
+                Log.i(LOG_TAG, "and " + characterHeight.get(i) + " pixels tall");
             }
         }
 
@@ -202,7 +199,7 @@ public class Preprocessor {
     private static Map<String, Integer> getAdjacentCharacterDimensions(Bitmap bitmap) {
         // What are the dimensions of the bitmap?
         if (DETAILED_LOGGING)
-            Log.i(PREPROCESSOR, "The size of the segment is: " + bitmap.getWidth() + " x " + bitmap.getHeight());
+            Log.i(LOG_TAG, "The size of the segment is: " + bitmap.getWidth() + " x " + bitmap.getHeight());
 
         // Keep track of the dimensions
         Map<String, Integer> dimensions = new HashMap<>();
@@ -235,7 +232,7 @@ public class Preprocessor {
 
             // Log which column we are preparing to iterate down
             if (DETAILED_LOGGING)
-                Log.e(PREPROCESSOR, "> " + x + ",0");
+                Log.e(LOG_TAG, "> " + x + ",0");
 
             // Move down the column one row at a time
             for (int y = 0; y < bitmap.getHeight(); ++y) {
@@ -250,7 +247,7 @@ public class Preprocessor {
 
                 // Log which row we are preparing to back-trace through
                 if (DETAILED_LOGGING)
-                    Log.i(PREPROCESSOR, "v " + x + "," + y);
+                    Log.i(LOG_TAG, "v " + x + "," + y);
 
                 // If we encounter a black pixel while iterating down this column,
                 // simply move on to the next column
@@ -300,9 +297,9 @@ public class Preprocessor {
                         continue;
 
                     if (DETAILED_LOGGING) {
-                        Log.i(PREPROCESSOR, "There were " + numBlackPixels + " pixels in the captured area");
-                        Log.i(PREPROCESSOR, "Great success!");
-                        Log.i(PREPROCESSOR, "The captured pixels comprise " + areaOfPixels + "% of the image's area");
+                        Log.i(LOG_TAG, "There were " + numBlackPixels + " pixels in the captured area");
+                        Log.i(LOG_TAG, "Great success!");
+                        Log.i(LOG_TAG, "The captured pixels comprise " + areaOfPixels + "% of the image's area");
 
                         // Draw the column first
                         for (int i = 0; i < yCoordinates.size(); ++i) {
@@ -358,7 +355,7 @@ public class Preprocessor {
 
             // Log which column we are preparing to iterate down
             if (DETAILED_LOGGING)
-                Log.e(PREPROCESSOR, "< " + x + ",0");
+                Log.e(LOG_TAG, "< " + x + ",0");
 
             // Move down the column one row at a time
             for (int y = 0; y < bitmap.getHeight(); ++y) {
@@ -373,7 +370,7 @@ public class Preprocessor {
 
                 // Log which row we are preparing to back-trace through
                 if (DETAILED_LOGGING)
-                    Log.i(PREPROCESSOR, "v " + x + "," + y);
+                    Log.i(LOG_TAG, "v " + x + "," + y);
 
                 // If we encounter a black pixel while iterating down this column,
                 // simply move on to the next column
@@ -387,7 +384,7 @@ public class Preprocessor {
                 while (xCopy < bitmap.getWidth() - 1 && bitmap.getPixel(xCopy, y) == Color.WHITE) {
                     // Log which row we are preparing to back-trace through
                     if (DETAILED_LOGGING)
-                        Log.i(PREPROCESSOR, "> " + x + "," + y);
+                        Log.i(LOG_TAG, "> " + x + "," + y);
 
                     xCoordinates.add(xCopy);
                     ++xCopy;
@@ -427,9 +424,9 @@ public class Preprocessor {
                         continue;
 
                     if (DETAILED_LOGGING) {
-                        Log.i(PREPROCESSOR, "There were " + numBlackPixels + " pixels in the captured area");
-                        Log.i(PREPROCESSOR, "Great success!");
-                        Log.i(PREPROCESSOR, "The captured pixels comprise " + areaOfPixels + "% of the image's area");
+                        Log.i(LOG_TAG, "There were " + numBlackPixels + " pixels in the captured area");
+                        Log.i(LOG_TAG, "Great success!");
+                        Log.i(LOG_TAG, "The captured pixels comprise " + areaOfPixels + "% of the image's area");
 
                         // Draw the column first
                         for (int i = 0; i < yCoordinates.size(); ++i) {
@@ -604,7 +601,7 @@ public class Preprocessor {
 
             // Log the information
             if (DETAILED_LOGGING)
-                Log.i(PREPROCESSOR, "Scaled height: " + bitmap.getHeight() + " Scaled width: " + bitmap.getWidth());
+                Log.i(LOG_TAG, "Scaled height: " + bitmap.getHeight() + " Scaled width: " + bitmap.getWidth());
         }
         return bitmap;
     }
@@ -689,8 +686,8 @@ public class Preprocessor {
 
         // Log the info
         if (DETAILED_LOGGING) {
-            Log.i(PREPROCESSOR, "First column: " + xFirst);
-            Log.i(PREPROCESSOR, "Last column:  " + xLast);
+            Log.i(LOG_TAG, "First column: " + xFirst);
+            Log.i(LOG_TAG, "Last column:  " + xLast);
         }
 
         // Get the row range
@@ -710,8 +707,8 @@ public class Preprocessor {
 
         // Log the info
         if (DETAILED_LOGGING){
-            Log.i(PREPROCESSOR, "First row: " + yFirst);
-            Log.i(PREPROCESSOR, "Last row:  " + yLast);
+            Log.i(LOG_TAG, "First row: " + yFirst);
+            Log.i(LOG_TAG, "Last row:  " + yLast);
         }
 
         // Calculate the dimensions of the subimage
@@ -734,8 +731,16 @@ public class Preprocessor {
      */
     public static List<Character> segmentCharacters(Bitmap bitmap) {
         // Get the initial set of segments, and keep track of their sizes
-        List<Character> characters = preliminarySegmentation(bitmap);
+        List<Character> characters = new ArrayList<>();
         List<Float> segmentSizes = new ArrayList<>();
+
+        // Attempt preliminary segmentation
+        try {
+            characters = preliminarySegmentation(bitmap);
+        } catch (IllegalArgumentException iae){
+            Log.e(LOG_TAG, "Error: Unable to segment image.");
+            iae.printStackTrace();
+        }
 
         // Variables we will use in order to track the average segment size
         int   numSegments = 0;
@@ -755,11 +760,13 @@ public class Preprocessor {
 
         // Get the average segment size
         averageSegmentSize = sum / numSegments;
-        Log.i(PREPROCESSOR, "Average segment size:    " + averageSegmentSize + '\n');
+        if (DETAILED_LOGGING)
+            Log.i(LOG_TAG, "Average segment size:    " + averageSegmentSize + '\n');
 
         // What constitutes an "unusually big" segment size?
         float sizeThreshold = (float)(averageSegmentSize * 1.75);
-        Log.i(PREPROCESSOR, "Size threshold:          " + sizeThreshold);
+        if (DETAILED_LOGGING)
+            Log.i(LOG_TAG, "Size threshold:          " + sizeThreshold);
 
         // Are any of the segments unusually big? If so, the segment
         // probably contains more than one character
@@ -768,22 +775,16 @@ public class Preprocessor {
             // be precision-segmented, and update the list of characters
             // with the newly-returned sub-segments
             if (segmentSizes.get(i) > sizeThreshold) {
-                Log.e(PREPROCESSOR, "The size of segment " + (i + 1) + " is " + segmentSizes.get(i));
+                if (DETAILED_LOGGING)
+                    Log.e(LOG_TAG, "The size of segment " + (i + 1) + " is " + segmentSizes.get(i));
 
                 // Perform precision segmentation on the large segment
                 List <Character> segmentedCharacters = precisionSegmentation(characters.get(i).getBitmap());
 
                 // Detect unsuccessful precision segmentation
                 if (segmentedCharacters.isEmpty()) {
-                    Log.e(PREPROCESSOR, "Error: precision segmentation failed");
+                    Log.e(LOG_TAG, "Error: precision segmentation failed");
                     continue;
-
-//                    // Attempt to perform division segmentation
-//                    segmentedCharacters = divisionSegmentation((characters.get(i).getBitmap()));
-//                    if (segmentedCharacters.isEmpty()) {
-//                        Log.e(PREPROCESSOR, "Error: division segmentation failed.");
-//
-//                    }
                 }
 
                 // Because we are turning one segment into two smaller segments,
@@ -797,11 +798,13 @@ public class Preprocessor {
                     segmentSizes.add((i + j), characters.get(j).sizeValue());
                 }
             }
-            else
-                Log.i(PREPROCESSOR, "The size of segment " + (i + 1) + " is " + segmentSizes.get(i));
+            else if (DETAILED_LOGGING)
+                Log.i(LOG_TAG, "The size of segment " + (i + 1) + " is " + segmentSizes.get(i));
         }
-        Log.i(PREPROCESSOR, "-------------------------------------------------------------");
-        Log.i(PREPROCESSOR, "-------------------------------------------------------------");
+        if (DETAILED_LOGGING) {
+            Log.i(LOG_TAG, "-------------------------------------------------------------");
+            Log.i(LOG_TAG, "-------------------------------------------------------------");
+        }
         return characters;
     }
 }

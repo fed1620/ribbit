@@ -9,7 +9,6 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
-import android.text.Editable;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -17,7 +16,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -47,7 +45,7 @@ public class MainActivity extends ActionBarActivity {
 
     // Character base
     private CharacterBase characterBase;
-    private boolean taskRunning = false;
+    private boolean loadingCharBase = false;
     private String    imagePath = "";
 
 
@@ -70,7 +68,7 @@ public class MainActivity extends ActionBarActivity {
             List<Character> characters;
 
             try {
-                taskRunning = true;
+                loadingCharBase = true;
 
                 // Instantiate the singleton character base
                 characterBase = CharacterBase.getInstance(MainActivity.this);
@@ -87,7 +85,7 @@ public class MainActivity extends ActionBarActivity {
         protected void onPostExecute(String result) {
             // Tell the activity that we have finished
             Log.i(LOG_TAG, result);
-            taskRunning = false;
+            loadingCharBase = false;
         }
     }
 
@@ -105,17 +103,14 @@ public class MainActivity extends ActionBarActivity {
 
         @Override
         protected void onPreExecute() {
-            if (DETAILED_LOGGING) {
                 loading.setText("Processing...");
                 loading.setVisibility(View.VISIBLE);
                 progressBar.setVisibility(View.VISIBLE);
-            }
         }
 
         @Override
         protected String doInBackground(String... params) {
             try {
-//                taskRunning = true;
 
                 // Begin the image processing
                 process();
@@ -129,14 +124,10 @@ public class MainActivity extends ActionBarActivity {
 
         @Override
         protected void onPostExecute(String result) {
-            if (DETAILED_LOGGING) {
-                loading.setVisibility(View.INVISIBLE);
-                progressBar.setVisibility(View.INVISIBLE);
-            }
-
             // Tell the activity that we have finished
+            loading.setVisibility(View.INVISIBLE);
+            progressBar.setVisibility(View.INVISIBLE);
             Log.i(LOG_TAG, result);
-//            taskRunning = false;
         }
     }
 
@@ -159,7 +150,7 @@ public class MainActivity extends ActionBarActivity {
             setupViews();
 
         // Load the character base as an async task
-        if (!taskRunning)
+        if (!loadingCharBase)
             new CharacterBaseLoader().execute();
     }
 
@@ -318,6 +309,7 @@ public class MainActivity extends ActionBarActivity {
             // Display it
             textBox.setText(word.getString());
             textBox.setVisibility(View.VISIBLE);
+            textBox.setSelection(textBox.getText().length());
             }
         });
 
