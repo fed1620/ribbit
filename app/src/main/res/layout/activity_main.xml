@@ -84,8 +84,6 @@
         android:layout_height="wrap_content"
         android:id="@+id/progressBar"
         android:visibility="invisible"
-        android:minWidth="100dp"
-        android:minHeight="100dp"
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true" />
 
@@ -97,11 +95,21 @@
         android:layout_height="wrap_content"
         android:ems="10"
         android:id="@+id/content"
-        android:width="100dp"
         android:gravity="center"
         android:visibility="invisible"
         android:layout_alignTop="@+id/progressBar"
         android:layout_centerHorizontal="true"
-        android:textSize="26sp" />
+        android:textSize="32sp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="@string/wait"
+        android:id="@+id/wait"
+        android:visibility="invisible"
+        android:gravity="center"
+        android:layout_above="@+id/textView"
+        android:layout_centerHorizontal="true" />
 
 </RelativeLayout>

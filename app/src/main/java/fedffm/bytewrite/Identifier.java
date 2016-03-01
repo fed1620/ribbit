@@ -9,6 +9,8 @@ import java.util.List;
 
 public class Identifier {
     private final static String LOG_TAG = "Identifier";
+    private final static int    A_ASCII = 97;
+    private final static int    Z_ASCII = 122;
 
     /**
      * In order to more accurately compare the unknown character against any given
@@ -35,7 +37,7 @@ public class Identifier {
      *                               sample character
      * @return A percentage representing how similar the bitmaps are.
      */
-    private static float computeSimilarity(Bitmap sampleCharacter, Bitmap unknownCharacterScaled) {
+    private static float similarity(Bitmap sampleCharacter, Bitmap unknownCharacterScaled) {
         // Ensure that the two bitmaps are the exact same size. This is critical
         if (sampleCharacter.getWidth() != unknownCharacterScaled.getWidth() ||
             sampleCharacter.getHeight() != unknownCharacterScaled.getHeight())
@@ -67,6 +69,39 @@ public class Identifier {
         return ((float)matchingPixels / (float)blackPixels) * (float)100.00;
     }
 
+//    /**
+//     * Identify a single character
+//     * @param unknown The character to be identified
+//     * @return The character updated with a name and ASCII code
+//     */
+//    public static Character identify(Character unknown, Context context) {
+//        // Start by getting the entire character base
+//        List<Character> characterBase = CharacterBase.getInstance(context).getAllCharacterSamples();
+//
+//        // Use these to find the greatest similarity
+//        float similarity;
+//        float greatestSimilarity = (float)0.0;
+//        int matchIndex = 0;
+//
+//        // Compare our unknown character against every character in the CharacterBase
+//        for (int i = 0; i < characterBase.size(); ++i) {
+//            Bitmap unknownScaled = matchSize(characterBase.get(i).getBitmap(), unknown.getBitmap());
+//            similarity = similarity(characterBase.get(i).getBitmap(), unknownScaled);
+//
+//            // Which of the two character bitmaps are most similar?
+//            if (similarity > greatestSimilarity) {
+//                greatestSimilarity = similarity;
+//                matchIndex = i;
+//            }
+//        }
+//
+//        // Log
+//        Log.i(LOG_TAG, "Greatest similarity: " + characterBase.get(matchIndex).getName() +
+//                " with a score of : " + (greatestSimilarity) + "%");
+//
+//        return characterBase.get(matchIndex);
+//    }
+
     /**
      * Identify a single character
      * @param unknown The character to be identified
@@ -74,66 +109,78 @@ public class Identifier {
      */
     public static Character identify(Character unknown, Context context) {
         // Start by getting the entire character base
-        List<Character> characterBase = CharacterBase.getInstance(context).getAllCharacterSamples();
+        List<Character> characterBase;
 
         // Use these to find the greatest similarity
         float similarity;
-        float greatestSimilarity = (float)0.0;
-        int matchIndex = 0;
+        float greatestSimilarity;
+        float averageSimilarity;
+        float greatestAverageSimilarity = (float)0.0;
+        int   matchIndex = 0;
 
-        // Compare our unknown character against every character in the CharacterBase
-        for (int i = 0; i < characterBase.size(); ++i) {
-            Bitmap unknownScaled = matchSize(characterBase.get(i).getBitmap(), unknown.getBitmap());
-            similarity = computeSimilarity(characterBase.get(i).getBitmap(), unknownScaled);
+        // Compare our unknown character against every character
+        for (int i = A_ASCII; i <= Z_ASCII; ++i) {
+            Log.i(LOG_TAG, "character:          " + (char)i);
 
-            // Which of the two character bitmaps are most similar?
-            if (similarity > greatestSimilarity) {
-                greatestSimilarity = similarity;
+            // Get the full list of samples for each different type of character/letter
+            characterBase = CharacterBase.getInstance(context).getCharacterSamples((char)i);
+
+            // Keep track of the similarity scores for each character
+            greatestSimilarity = (float)0.0;
+            averageSimilarity  = (float)0.0;
+
+            // Iterate through each sample in the list for the current character
+            for (int j = 0; j < characterBase.size(); ++j) {
+                // Compare the bitmap of the unknown character against the current sample
+                Bitmap unknownScaled = matchSize(characterBase.get(j).getBitmap(), unknown.getBitmap());
+                similarity = similarity(characterBase.get(j).getBitmap(), unknownScaled);
+
+                // Keep track of which character has the greatest similarity
+                // TODO: This is for debugging purposes
+                if (similarity > greatestSimilarity)
+                    greatestSimilarity = similarity;
+
+                // Compute the average similarity for the given character
+                averageSimilarity += similarity;
+            }
+
+            // Calculate the average similarity for the character we finished iterating through
+            averageSimilarity = averageSimilarity / characterBase.size();
+            Log.i(LOG_TAG, "greatest similarity: " + greatestSimilarity);
+            Log.i(LOG_TAG, "averageSimilarity:   " + averageSimilarity + "\n");
+
+            // Keep track of which character has the highest similarity (on average)
+            // to the unknown character
+            if (averageSimilarity > greatestAverageSimilarity) {
+                greatestAverageSimilarity = averageSimilarity;
                 matchIndex = i;
             }
         }
 
-        Log.i(LOG_TAG, "Greatest similarity: " + characterBase.get(matchIndex).getName() +
-                " with a score of : " + (greatestSimilarity) + "%");
-        return characterBase.get(matchIndex);
+        // Log
+        Log.i(LOG_TAG, "Greatest average similarity: " + (char)matchIndex +
+                " with an average of : " + (greatestAverageSimilarity) + "% similarity\n\n");
+
+        // Set the character name and ascii code
+        unknown.setName((char)matchIndex);
+        unknown.setAscii(matchIndex);
+
+        return unknown;
     }
 
     /**
-     * Identify a character
+     * Identify a word
      * @param unknownWord The Word to be identified
      * @return A Word consisting of identified characters
      */
     public static Word identify(Word unknownWord, Context context) {
-        // Start by getting the reference to the entire character base
-        List<Character> characterBase = CharacterBase.getInstance(context).getAllCharacterSamples();
-
         // Instantiate what will be our word
         Word word = new Word();
 
         // Examine each character in the word
         for (Character unknownCharacter : unknownWord.getCharacters()) {
-            // Use these to find the greatest similarity
-            float similarity;
-            float greatestSimilarity = (float)0.0;
-            int   matchIndex = 0;
-
-            // Compare our unknown character against every character in the CharacterBase
-            for (int i = 0; i < characterBase.size(); ++i) {
-                Bitmap unknownScaled = matchSize(characterBase.get(i).getBitmap(), unknownCharacter.getBitmap());
-                similarity = computeSimilarity(characterBase.get(i).getBitmap(), unknownScaled);
-
-                // Which of the two character bitmaps are most similar?
-                if (similarity > greatestSimilarity) {
-                    greatestSimilarity = similarity;
-                    matchIndex = i;
-                }
-            }
-            // Add each character to the word we are building
-            word.addCharacter(characterBase.get(matchIndex));
-
-            // Log the similarity score for each character
-            Log.i(LOG_TAG, "Greatest similarity: " + characterBase.get(matchIndex).getName() +
-                           " with a score of : " + (greatestSimilarity) + "%");
+            // Identify each character and add it to our word
+            word.addCharacter(identify(unknownCharacter,context));
         }
         return word;
     }

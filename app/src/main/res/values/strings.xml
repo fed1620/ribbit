@@ -8,5 +8,6 @@
     <string name="welcomeMessage">Take a picture to get started!</string>
     <string name="processButton">Process</string>
     <string name="retakeButton">Retake</string>
+    <string name="wait">please wait</string>
 
 </resources>
