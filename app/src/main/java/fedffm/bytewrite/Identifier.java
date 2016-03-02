@@ -69,39 +69,6 @@ public class Identifier {
         return ((float)matchingPixels / (float)blackPixels) * (float)100.00;
     }
 
-//    /**
-//     * Identify a single character
-//     * @param unknown The character to be identified
-//     * @return The character updated with a name and ASCII code
-//     */
-//    public static Character identify(Character unknown, Context context) {
-//        // Start by getting the entire character base
-//        List<Character> characterBase = CharacterBase.getInstance(context).getAllCharacterSamples();
-//
-//        // Use these to find the greatest similarity
-//        float similarity;
-//        float greatestSimilarity = (float)0.0;
-//        int matchIndex = 0;
-//
-//        // Compare our unknown character against every character in the CharacterBase
-//        for (int i = 0; i < characterBase.size(); ++i) {
-//            Bitmap unknownScaled = matchSize(characterBase.get(i).getBitmap(), unknown.getBitmap());
-//            similarity = similarity(characterBase.get(i).getBitmap(), unknownScaled);
-//
-//            // Which of the two character bitmaps are most similar?
-//            if (similarity > greatestSimilarity) {
-//                greatestSimilarity = similarity;
-//                matchIndex = i;
-//            }
-//        }
-//
-//        // Log
-//        Log.i(LOG_TAG, "Greatest similarity: " + characterBase.get(matchIndex).getName() +
-//                " with a score of : " + (greatestSimilarity) + "%");
-//
-//        return characterBase.get(matchIndex);
-//    }
-
     /**
      * Identify a single character
      * @param unknown The character to be identified
@@ -115,13 +82,13 @@ public class Identifier {
         float similarity;
         float greatestSimilarity;
         float averageSimilarity;
+        float totalSimilarity;
+        float greatestTotalSimilarity = (float)0.0;
         float greatestAverageSimilarity = (float)0.0;
         int   matchIndex = 0;
 
         // Compare our unknown character against every character
         for (int i = A_ASCII; i <= Z_ASCII; ++i) {
-            Log.i(LOG_TAG, "character:          " + (char)i);
-
             // Get the full list of samples for each different type of character/letter
             characterBase = CharacterBase.getInstance(context).getCharacterSamples((char)i);
 
@@ -146,20 +113,24 @@ public class Identifier {
 
             // Calculate the average similarity for the character we finished iterating through
             averageSimilarity = averageSimilarity / characterBase.size();
-            Log.i(LOG_TAG, "greatest similarity: " + greatestSimilarity);
-            Log.i(LOG_TAG, "averageSimilarity:   " + averageSimilarity + "\n");
+            totalSimilarity   = (averageSimilarity + greatestSimilarity) / (float)2.0;
 
-            // Keep track of which character has the highest similarity (on average)
+//             Log.i(LOG_TAG, "character:          " + (char)i);
+//            Log.i(LOG_TAG, "greatest similarity: " + greatestSimilarity);
+//            Log.i(LOG_TAG, "averageSimilarity:   " + averageSimilarity + "\n");
+//            Log.i(LOG_TAG, "totalSimilarity: " + totalSimilarity + "\n");
+
+            // Keep track of which character has the highest similarity (total)
             // to the unknown character
-            if (averageSimilarity > greatestAverageSimilarity) {
-                greatestAverageSimilarity = averageSimilarity;
+            if (totalSimilarity > greatestTotalSimilarity) {
+                greatestTotalSimilarity = totalSimilarity;
                 matchIndex = i;
             }
         }
 
         // Log
-        Log.i(LOG_TAG, "Greatest average similarity: " + (char)matchIndex +
-                " with an average of : " + (greatestAverageSimilarity) + "% similarity\n\n");
+        Log.i(LOG_TAG, "Greatest total similarity: " + (char)matchIndex +
+                " with a total of : " + (greatestTotalSimilarity) + "% similarity\n\n");
 
         // Set the character name and ascii code
         unknown.setName((char)matchIndex);

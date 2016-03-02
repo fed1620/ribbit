@@ -20,12 +20,10 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.Random;
 
 /**********************************************************************************************
  *                                   Main Activity
@@ -304,21 +302,19 @@ public class MainActivity extends ActionBarActivity {
         bitmap = Preprocessor.greyscale(bitmap);
         bitmap = Preprocessor.binarize(bitmap);
         bitmap = Preprocessor.crop(bitmap);
-        List<Character> characters = Preprocessor.segmentCharacters(bitmap);
-        saveSegments(characters);
 
-//        // The word containing unidentified characters
-//        final Word word = Identifier.identify(new Word(Preprocessor.segmentCharacters(bitmap)), this);
-//
-//        runOnUiThread(new Runnable() {
-//            @Override
-//            public void run() {
-//            // Display it
-//            textBox.setText(word.getString());
-//            textBox.setVisibility(View.VISIBLE);
-//            textBox.setSelection(textBox.getText().length());
-//            }
-//        });
+        // The word containing unidentified characters
+        final Word word = Identifier.identify(new Word(Preprocessor.segmentCharacters(bitmap)), this);
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+            // Display it
+            textBox.setText(word.getString());
+            textBox.setVisibility(View.VISIBLE);
+            textBox.setSelection(textBox.getText().length());
+            }
+        });
 
     }
 
@@ -333,43 +329,5 @@ public class MainActivity extends ActionBarActivity {
         retakeButton.setVisibility(View.INVISIBLE);
 
         new Processor().execute();
-    }
-
-    /**********************************************************************************************
-     *                             (For generating new character samples)
-     **********************************************************************************************/
-
-    /**
-     * Generate our character pool
-     */
-    public void saveSegments(List<Character> characters) {
-        for (int i = 0; i < characters.size(); ++i) {
-            saveImage(characters.get(i).getBitmap());
-        }
-    }
-
-    /**
-     * Save a bitmap
-     * @param finalBitmap The bitmap to be saved
-     */
-    private void saveImage(Bitmap finalBitmap) {
-        // Get the directory to the download folder
-        String root = Environment.getExternalStorageDirectory().toString();
-        File myDir = new File(root + "/bytewrite");
-        myDir.mkdir();
-
-        String fname = new Random().nextInt(1000000) + ".jpg";
-
-        File file = new File (myDir, fname);
-        if (file.exists ()) file.delete ();
-        try {
-            FileOutputStream out = new FileOutputStream(file);
-            finalBitmap.compress(Bitmap.CompressFormat.JPEG, 90, out);
-            out.flush();
-            out.close();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 }
