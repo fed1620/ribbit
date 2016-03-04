@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.util.Log;
 
+import java.util.InputMismatchException;
 import java.util.List;
 
 public class Identifier {
@@ -30,48 +31,93 @@ public class Identifier {
     }
 
     /**
-     * Walk through each of the bitmaps and see which pixels match, versus which do not.
-     * @param sample a known character from our CharacterBase
-     * @param unknown the character we are trying to identify.
-     * @return A percentage representing how similar the characters are
+     * How does the width and height of the unidentified character compare with
+     * the width and height of the known sample character
+     * @param sample A known character from our CharacterBase
+     * @param unknown The character we are attempting to identify
+     * @return A float representing how similar the dimensions are
      */
-    private static float similarity(Character sample, Character unknown) {
+    private static float dimensionalSimilarity(Character sample, Character unknown) {
+
+        // 0.5: The character is twice as tall as it is wide
+        // 1.0: The character's width and height are exactly the same
+        // 2.0: The character is twice as wide as it is tall
+        float sampleRatio  = (float)sample.getWidth()  / (float)sample.getHeight();
+        float unknownRatio = (float)unknown.getWidth() / (float)unknown.getHeight();
+
+        // 1.0 == The dimension ratios of each character is exactly the same
+        return Math.min(sampleRatio, unknownRatio) / Math.max(sampleRatio, unknownRatio);
+    }
+
+    /**
+     *
+     * @param sample A known character from our CharacterBase
+     * @param unknown The character we are attempting to identify
+     * @return A float representing the similarity of the character's area between
+     * both the unknown and the sample character
+     */
+    private static float areaSimilarity(Character sample, Character unknown) {
         // Get the reference to the bitmaps
         Bitmap sampleBitmap  = sample.getBitmap();
         Bitmap unknownBitmap = unknown.getBitmap();
 
-        // Define several measures of similarity
-        // TODO: modularize this
-        float distributionSimilarity;
-        float dimensionalSimilarity;
-        float areaOccupationSimilarity;
+        // How many character pixels each Character has
+        float pixelsSample  = 0;
+        float pixelsUnknown = 0;
+
+        // Calculate the area of both bitmaps
+        float area = (float)sampleBitmap.getWidth()  * (float)sampleBitmap.getHeight();
+
+        // Find out how many character pixels each bitmap contains
+        for (int x = 0; x < sampleBitmap.getWidth(); ++x)
+            for (int y = 0; y < sampleBitmap.getHeight(); ++y) {
+                if (sampleBitmap.getPixel(x, y)  == Color.BLACK)
+                    ++pixelsSample;
+                if (unknownBitmap.getPixel(x, y) == Color.BLACK)
+                    ++pixelsUnknown;
+            }
+
+        // How much of the bitmap's area is occupied by character pixels?
+        float areaSample  = pixelsSample / area;
+        float areaUnknown = pixelsUnknown / area;
+
+        // 1.0 == The character pixels of each character occupies the exact same of
+        //        their respective bitmaps
+        return Math.min(areaSample, areaUnknown) / Math.max(areaSample, areaUnknown);
+    }
+
+    /**
+     *
+     * @param sample A known character from our CharacterBase
+     * @param unknown The character we are attempting to identify
+     * @return A float representing how closely the pixels of each character match
+     */
+    private static float pixelDistributionSimilarity(Character sample, Character unknown) {
+        // Get the reference to the bitmaps
+        Bitmap sampleBitmap  = sample.getBitmap();
+        Bitmap unknownBitmap = unknown.getBitmap();
 
         // Ensure that the two bitmaps are the exact same size. This ensures that
         // we do not go out of bounds
-        if (sampleBitmap.getWidth() != unknownBitmap.getWidth() ||
+        if (sampleBitmap.getWidth()  != unknownBitmap.getWidth() ||
             sampleBitmap.getHeight() != unknownBitmap.getHeight())
-                return (float)0.0;
-
-        // Store width, height, and area for later reference
-        int width  = sampleBitmap.getWidth();
-        int height = sampleBitmap.getHeight();
-        int area   = width * height;
+            throw new InputMismatchException("Error comparing bitmaps: Bitmaps are not the same size");
 
         // Keep track of pixels:
         //    1. pixelsUnknown:  How many (black) pixels the unidentified character contains
         //    2. pixelsSample:   How many (black) pixels the sample character contains
         //    3. pixelsMatching: How many (black) pixels are shared by BOTH characters
-        int pixelsUnknown  = 0;
-        int pixelsSample   = 0;
-        int pixelsMatching = 0;
+        float pixelsUnknown  = 0;
+        float pixelsSample   = 0;
+        float pixelsMatching = 0;
 
         // Iterate through the bitmap
-        for (int x = 0; x < width; ++x)
-            for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < sampleBitmap.getWidth(); ++x)
+            for (int y = 0; y < sampleBitmap.getHeight(); ++y) {
                 // Pixels encountered in the same location on both bitmaps
                 // contributes to the overall accuracy score
                 if (unknownBitmap.getPixel(x, y) == Color.BLACK &&
-                    sampleBitmap.getPixel(x, y) == Color.BLACK) {
+                        sampleBitmap.getPixel(x, y) == Color.BLACK) {
                     pixelsUnknown++;
                     pixelsSample++;
                     pixelsMatching++;
@@ -86,27 +132,35 @@ public class Identifier {
                 }
             }
 
-        // Calculate what percentage of the total bitmap is occupied
-        // by (black) pixels
-        float areaUnknown     = (float)pixelsUnknown / (float)area;
-        float areaSample      = (float)pixelsSample /  (float)area;
-        float areaSimilarity  = Math.min(areaSample, areaUnknown) / Math.max(areaSample, areaUnknown);
-        float similarityScore = ((float)pixelsMatching / Math.max((float)pixelsSample, (float)pixelsUnknown)) * areaSimilarity;
+        // 1.0 == The character pixels of each character are exactly aligned
+        return pixelsMatching / pixelsSample;
+    }
 
-        Log.i(LOG_TAG, "unknown w: " + unknown.getWidth() + " unknown h: " + unknown.getHeight());
-        Log.i(LOG_TAG, "sample w:  " + sample.getWidth()  + " sample h:  " + sample.getHeight());
-        Log.i(LOG_TAG, "pixelsUnknown:  " + pixelsUnknown);
-        Log.i(LOG_TAG, "pixelsSample:   " + pixelsSample);
-        Log.i(LOG_TAG, "pixelsMatching: " + pixelsMatching);
-        Log.i(LOG_TAG, "pixelsMatching / pixelsSample  = " + (float)pixelsMatching / (float)pixelsSample);
-        Log.i(LOG_TAG, "pixelsMatching / pixelsUnknown = " + (float)pixelsMatching / (float)pixelsUnknown);
-        Log.i(LOG_TAG, "area:            " + area);
-        Log.i(LOG_TAG, "areaUnknown:     " + areaUnknown);
-        Log.i(LOG_TAG, "areaSample:      " + areaSample);
-        Log.i(LOG_TAG, "areaSimilarity:  " + areaSimilarity);
-        Log.i(LOG_TAG, "similarityScore: " + similarityScore);
-        Log.i(LOG_TAG, "============================================================================");
-        Log.i(LOG_TAG, "============================================================================");
+    /**
+     * Walk through each of the bitmaps and see which pixels match, versus which do not.
+     * @param sample a known character from our CharacterBase
+     * @param unknown the character we are trying to identify.
+     * @return A percentage representing how similar the characters are
+     */
+    private static float similarity(Character sample, Character unknown) {
+        // Similarity array
+        float [] similarity = {
+                                dimensionalSimilarity(sample, unknown)       * 100,
+                                areaSimilarity(sample, unknown)              * 100 ,
+                                pixelDistributionSimilarity(sample, unknown) * 100
+                              };
+
+        // Combine these values to produce a "similarity score"
+        float similarityScore = ((similarity[0] + similarity[1] + similarity[2]) / 3);
+
+//        Log.i(LOG_TAG, "unknown w: " + unknown.getWidth() + " unknown h: " + unknown.getHeight());
+//        Log.i(LOG_TAG, "sample w:  " + sample.getWidth()  + " sample h:  " + sample.getHeight());
+//        Log.i(LOG_TAG, "dimensionalSimilarity:       " + similarity[0]);
+//        Log.i(LOG_TAG, "areaSimilarity:              " + similarity[1]);
+//        Log.i(LOG_TAG, "pixelDistributionSimilarity: " + similarity[2]);
+//        Log.i(LOG_TAG, "similarityScore:             " + similarityScore);
+//        Log.i(LOG_TAG, "============================================================================");
+//        Log.i(LOG_TAG, "============================================================================");
 
         //   0.0 == the two characters are completely different
         // 100.0 == the two characters are an identical match
@@ -123,14 +177,14 @@ public class Identifier {
         List<Character> characterBase;
 
         // For all character samples...
-        float greatestSimilarity        = (float)0.0;
-        float greatestTotalSimilarity   = (float)0.0;
-        float greatestAverageSimilarity = (float)0.0;
+        float greatestSimilarity = (float)0.0;
+        float greatestAverage    = (float)0.0;
+        float greatestCombined   = (float)0.0;
 
         // Indexs to keep track of the greatest similarities
-        int   iGreatest = 0;
-        int   iGreatestAverage = 0;
-        int   iGreatestTotal = 0;
+        int   iGreatest         = 0;
+        int   iGreatestAverage  = 0;
+        int   iGreatestCombined = 0;
 
         // Compare our unknown character against every character
         for (int i = A_ASCII; i <= Z_ASCII; ++i) {
@@ -143,8 +197,8 @@ public class Identifier {
 
             // Iterate through each sample in the list for the current character
             for (int j = 0; j < characterBase.size(); ++j) {
-                Log.i(LOG_TAG, "character:             " + (char)i);
-                Log.i(LOG_TAG, "-----------------------");
+//                Log.i(LOG_TAG, "character:             " + (char)i);
+//                Log.i(LOG_TAG, "------------------------");
 
                 // Compare the bitmap of the unknown character against the current sample
                 unknown.setBitmap(matchSize(characterBase.get(j), unknown));
@@ -159,14 +213,14 @@ public class Identifier {
             }
 
             // Calculate the average similarity for the character we finished iterating through
-            float averageSimilarity = sum / (float)characterBase.size();
-            float totalSimilarity   = (averageSimilarity + bestSimilarityCurrentChar) / (float)2.0;
+            float averageSimilarity  = sum / (float)characterBase.size();
+            float combinedSimilarity = (averageSimilarity + bestSimilarityCurrentChar) / (float)2.0;
 
 //            Log.i(LOG_TAG, "character:             " + (char)i);
 //            Log.i(LOG_TAG, "-----------------------");
 //            Log.i(LOG_TAG, "best for current char: " + bestSimilarityCurrentChar);
-//            Log.i(LOG_TAG, "average:               " + averageSimilarity);
-//            Log.i(LOG_TAG, "total:                 " + totalSimilarity);
+//            Log.i(LOG_TAG, "average :              " + averageSimilarity);
+//            Log.i(LOG_TAG, "combined:              " + combinedSimilarity);
 //            Log.i(LOG_TAG, "-----------------------");
 //            Log.i(LOG_TAG, "-----------------------");
 
@@ -177,31 +231,31 @@ public class Identifier {
             }
 
             // Which character has the greatest average similarity
-            if (averageSimilarity > greatestAverageSimilarity) {
-                greatestAverageSimilarity = averageSimilarity;
+            if (averageSimilarity > greatestAverage) {
+                greatestAverage = averageSimilarity;
                 iGreatestAverage = i;
 
             }
 
             // Which character has the greatest similarity total (average + highest)
-            if (totalSimilarity > greatestTotalSimilarity) {
-                greatestTotalSimilarity = totalSimilarity;
-                iGreatestTotal = i;
+            if (combinedSimilarity > greatestCombined) {
+                greatestCombined = combinedSimilarity;
+                iGreatestCombined = i;
             }
         }
 
         // Log
         Log.i(LOG_TAG, "============================================================================");
         Log.i(LOG_TAG, "============================================================================");
-        Log.i(LOG_TAG, "Greatest similarity:         " + (char)iGreatest);
-        Log.i(LOG_TAG, "Greatest average similarity: " + (char)iGreatestAverage);
-        Log.i(LOG_TAG, "Greatest total similarity:   " + (char)iGreatestTotal);
+        Log.i(LOG_TAG, "Greatest similarity:          " + (char)iGreatest + " - " + greatestSimilarity);
+        Log.i(LOG_TAG, "Greatest average similarity:  " + (char)iGreatestAverage + " - " + greatestAverage);
+        Log.i(LOG_TAG, "Greatest combined similarity: " + (char)iGreatestCombined + " - " + greatestCombined);
         Log.i(LOG_TAG, "============================================================================");
         Log.i(LOG_TAG, "============================================================================");
 
         // Set the character name and ascii code
-        unknown.setName((char)iGreatestTotal);
-        unknown.setAscii(iGreatestTotal);
+        unknown.setName((char)iGreatestCombined);
+        unknown.setAscii(iGreatestCombined);
 
         return unknown;
     }

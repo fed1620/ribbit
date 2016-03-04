@@ -43,6 +43,12 @@ public class MainActivity extends ActionBarActivity {
     private Button    retakeButton;
     private Button    cameraButton;
 
+    // Timing
+    private TextView timeGreyscale;
+    private TextView timeBinarize;
+    private TextView timeCrop;
+    private TextView timeSegmentIdentify;
+
     // Character base
     private CharacterBase characterBase;
     private boolean loadingCharBase = false;
@@ -239,6 +245,12 @@ public class MainActivity extends ActionBarActivity {
         retakeButton  = (Button)findViewById(R.id.retakeButton);
         instructions  = (TextView)findViewById(R.id.textView);
         textBox       = (EditText)findViewById(R.id.content);
+
+        // References to the timing views
+        timeGreyscale       = (TextView)findViewById(R.id.timeGreyscale);
+        timeBinarize        = (TextView)findViewById(R.id.timeBinarize);
+        timeCrop            = (TextView)findViewById(R.id.timeCrop);
+        timeSegmentIdentify = (TextView)findViewById(R.id.timeIdentifySegment);
     }
 
     /**
@@ -298,24 +310,49 @@ public class MainActivity extends ActionBarActivity {
      * Go to the Process Activity
      */
     private void process() {
-        // Convert the bitmap to greyscale, binarize, and crop
-        bitmap = Preprocessor.greyscale(bitmap);
-        bitmap = Preprocessor.binarize(bitmap);
-        bitmap = Preprocessor.crop(bitmap);
+        // Time for each step in the process
+        long timeStart;
+        long timeEnd;
 
-        // The word containing unidentified characters
+        // Convert to greyscale
+        timeStart = System.nanoTime();
+        bitmap = Preprocessor.greyscale(bitmap);
+        timeEnd = System.nanoTime();
+        final long greyscale = (timeEnd - timeStart) / 1000000;
+
+        // Binarize
+        timeStart = System.nanoTime();
+        bitmap = Preprocessor.binarize(bitmap);
+        timeEnd = System.nanoTime();
+        final long binarize = (timeEnd - timeStart) / 1000000;
+
+        // Crop
+        timeStart = System.nanoTime();
+        bitmap = Preprocessor.crop(bitmap);
+        timeEnd = System.nanoTime();
+        final long crop = (timeEnd - timeStart) / 1000000;
+
+        // Segment and Identify in one fell swoop
+        timeStart = System.nanoTime();
         final Word word = Identifier.identify(new Word(Preprocessor.segmentCharacters(bitmap)), this);
+        timeEnd = System.nanoTime();
+        final long segmentIdentify = (timeEnd - timeStart) / 1000000;
 
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-            // Display it
+            // Display each time
+            timeGreyscale.setText("greyscale " + greyscale + " ms");
+            timeBinarize.setText("binarization " + binarize + " ms");
+            timeCrop.setText("cropping " + crop + " ms");
+            timeSegmentIdentify.setText("segment & id " + segmentIdentify + " ms");
+
+            // Display the word
             textBox.setText(word.getString());
             textBox.setVisibility(View.VISIBLE);
             textBox.setSelection(textBox.getText().length());
             }
         });
-
     }
 
     /**
