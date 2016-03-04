@@ -16,37 +16,45 @@ public class Identifier {
      * In order to more accurately compare the unknown character against any given
      * sample character, scale the unknown character to be the exact same size as the sample
      * character
-     * @param sampleCharacter The bitmap for a known character from our CharacterBase
-     * @param unknownCharacter The bitmap for the character we are trying to identify
+     * @param sample The bitmap for a known character from our CharacterBase
+     * @param unknown The bitmap for the character we are trying to identify
      * @return A bitmap of the unknown character with the same dimensions of the sample character
      */
-    private static Bitmap matchSize(Bitmap sampleCharacter, Bitmap unknownCharacter) {
+    private static Bitmap matchSize(Character sample, Character unknown) {
         // Get the dimensions of the sample bitmap
-        int w = sampleCharacter.getWidth();
-        int h = sampleCharacter.getHeight();
+        int w = sample.getBitmap().getWidth();
+        int h = sample.getBitmap().getHeight();
 
         // Create a bitmap of the unknown character using the dimensions of the sample
-        return Bitmap.createScaledBitmap(unknownCharacter, w, h, false);
+        return Bitmap.createScaledBitmap(unknown.getBitmap(), w, h, false);
     }
 
     /**
      * Walk through each of the bitmaps and see which pixels match, versus which do not.
-     * @param sampleCharacter The bitmap for a known character from our CharacterBase
-     * @param unknownCharacterScaled The bitmap for the character we are trying to identify. This
-     *                               must be scaled to the exact same size as the bitmap of the
-     *                               sample character
-     * @return A percentage representing how similar the bitmaps are.
+     * @param sample a known character from our CharacterBase
+     * @param unknown the character we are trying to identify.
+     * @return A percentage representing how similar the characters are
      */
-    private static float similarity(Bitmap sampleCharacter, Bitmap unknownCharacterScaled) {
+    private static float similarity(Character sample, Character unknown) {
+        // Get the reference to the bitmaps
+        Bitmap sampleBitmap  = sample.getBitmap();
+        Bitmap unknownBitmap = unknown.getBitmap();
+
+        // Define several measures of similarity
+        // TODO: modularize this
+        float distributionSimilarity;
+        float dimensionalSimilarity;
+        float areaOccupationSimilarity;
+
         // Ensure that the two bitmaps are the exact same size. This ensures that
         // we do not go out of bounds
-        if (sampleCharacter.getWidth() != unknownCharacterScaled.getWidth() ||
-            sampleCharacter.getHeight() != unknownCharacterScaled.getHeight())
+        if (sampleBitmap.getWidth() != unknownBitmap.getWidth() ||
+            sampleBitmap.getHeight() != unknownBitmap.getHeight())
                 return (float)0.0;
 
         // Store width, height, and area for later reference
-        int width  = sampleCharacter.getWidth();
-        int height = sampleCharacter.getHeight();
+        int width  = sampleBitmap.getWidth();
+        int height = sampleBitmap.getHeight();
         int area   = width * height;
 
         // Keep track of pixels:
@@ -62,8 +70,8 @@ public class Identifier {
             for (int y = 0; y < height; ++y) {
                 // Pixels encountered in the same location on both bitmaps
                 // contributes to the overall accuracy score
-                if (unknownCharacterScaled.getPixel(x, y) == Color.BLACK &&
-                    sampleCharacter.getPixel(x, y) == Color.BLACK) {
+                if (unknownBitmap.getPixel(x, y) == Color.BLACK &&
+                    sampleBitmap.getPixel(x, y) == Color.BLACK) {
                     pixelsUnknown++;
                     pixelsSample++;
                     pixelsMatching++;
@@ -71,9 +79,9 @@ public class Identifier {
 
                 // Look for black pixels on an individual basis
                 else {
-                    if (unknownCharacterScaled.getPixel(x, y) == Color.BLACK)
+                    if (unknownBitmap.getPixel(x, y) == Color.BLACK)
                         pixelsUnknown++;
-                    if (sampleCharacter.getPixel(x, y) == Color.BLACK)
+                    if (sampleBitmap.getPixel(x, y) == Color.BLACK)
                         pixelsSample++;
                 }
             }
@@ -85,12 +93,13 @@ public class Identifier {
         float areaSimilarity  = Math.min(areaSample, areaUnknown) / Math.max(areaSample, areaUnknown);
         float similarityScore = ((float)pixelsMatching / Math.max((float)pixelsSample, (float)pixelsUnknown)) * areaSimilarity;
 
+        Log.i(LOG_TAG, "unknown w: " + unknown.getWidth() + " unknown h: " + unknown.getHeight());
+        Log.i(LOG_TAG, "sample w:  " + sample.getWidth()  + " sample h:  " + sample.getHeight());
         Log.i(LOG_TAG, "pixelsUnknown:  " + pixelsUnknown);
         Log.i(LOG_TAG, "pixelsSample:   " + pixelsSample);
         Log.i(LOG_TAG, "pixelsMatching: " + pixelsMatching);
         Log.i(LOG_TAG, "pixelsMatching / pixelsSample  = " + (float)pixelsMatching / (float)pixelsSample);
         Log.i(LOG_TAG, "pixelsMatching / pixelsUnknown = " + (float)pixelsMatching / (float)pixelsUnknown);
-        Log.i(LOG_TAG, ".");
         Log.i(LOG_TAG, "area:            " + area);
         Log.i(LOG_TAG, "areaUnknown:     " + areaUnknown);
         Log.i(LOG_TAG, "areaSample:      " + areaSample);
@@ -134,11 +143,12 @@ public class Identifier {
 
             // Iterate through each sample in the list for the current character
             for (int j = 0; j < characterBase.size(); ++j) {
-                // Compare the bitmap of the unknown character against the current sample
-                Bitmap unknownScaled = matchSize(characterBase.get(j).getBitmap(), unknown.getBitmap());
                 Log.i(LOG_TAG, "character:             " + (char)i);
                 Log.i(LOG_TAG, "-----------------------");
-                float similarity = similarity(characterBase.get(j).getBitmap(), unknownScaled);
+
+                // Compare the bitmap of the unknown character against the current sample
+                unknown.setBitmap(matchSize(characterBase.get(j), unknown));
+                float similarity = similarity(characterBase.get(j), unknown);
 
                 // Keep track of the best similarity for the current character
                 if (similarity > bestSimilarityCurrentChar)
