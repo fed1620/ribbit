@@ -1,61 +1,82 @@
 package fedffm.bytewrite;
 
 import android.graphics.Bitmap;
+import android.graphics.Color;
 
-import java.util.List;
 
 public class Character {
 
-    private char name;
-    private Integer id;
+    private char    name;
     private Integer ascii;
-    private Bitmap bitmap;
-    private List<Bitmap> quadrants;
+    private Integer width;
+    private Integer height;
+    private Bitmap  bitmap;
 
     // Default
     public Character() {
         this.name      = '?';
-        this.id        = null;
         this.ascii     = null;
+        this.width     = null;
+        this.height    = null;
         this.bitmap    = null;
-        this.quadrants = null;
     }
 
     // Non-default
     public Character(Bitmap bitmap) {
         this.name      = '?';
-        this.id        = null;
         this.ascii     = null;
         this.bitmap    = bitmap;
-        this.quadrants = null;
+        this.setDimensions();
     }
 
     // Setters
-    public void setName(char name)       {this.name = name;}
-    public void setId(Integer id)        {this.id = id;}
-    public void setAscii(Integer ascii)  {this.ascii = ascii;}
-    public void setBitmap(Bitmap bitmap) {this.bitmap = bitmap;}
+    public  void setName(char name)       {this.name = name;}
+    public  void setAscii(Integer ascii)  {this.ascii = ascii;}
+    public  void setBitmap(Bitmap bitmap) {this.bitmap = bitmap;}
+    private void setWidth(int width)      {this.width  = width;}
+    private void setHeight(int height)    {this.height = height;}
 
     // Getters
-    public char         getName()      {return this.name;}
-    public Integer      getId()        {return this.id;}
-    public Integer      getAscii()     {return this.ascii;}
-    public Bitmap       getBitmap()    {return this.bitmap;}
-    public List<Bitmap> getQuadrants() {return this.quadrants;}
+    public char    getName()   {return this.name;}
+    public Integer getAscii()  {return this.ascii;}
+    public Integer getWidth()  {return this.width;}
+    public Integer getHeight() {return this.height;}
+    public Bitmap  getBitmap() {return this.bitmap;}
 
 
     /**
-     * Add a fourth of the original character bitmap
-     *
-     * [1][2]
-     * [3][4]
-     *
-     * @param quadrant Return the quadrant
+     * Find out how wide a character is, as well as how tall a character is
      */
-    public void addQuadrant(Bitmap quadrant) {
-        if (quadrants.size() < 4)
-            quadrants.add(quadrant);
+    private void setDimensions() {
+        int xStart = this.bitmap.getWidth();
+        int yStart = this.bitmap.getHeight();
+        int xEnd   = 0;
+        int yEnd   = 0;
+
+        // Start by iterating through the bitmap
+        for (int x = 0; x < this.bitmap.getWidth(); ++x)
+            for (int y = 0; y < this.bitmap.getHeight(); ++y)
+
+                // We only care about black pixels (the character's pixels)
+                if (this.bitmap.getPixel(x, y) == Color.BLACK) {
+                    // Find out where the character begins and ends on the x axis
+                    if (x < xStart)
+                        xStart = x;
+                    if (x > xEnd)
+                        xEnd = x;
+
+                    // Find out where the character begins and ends on the y axis
+                    if (y < yStart)
+                        yStart = y;
+                    if (y > yEnd)
+                        yEnd = y;
+                }
+
+        // Set the appropriate dimensions
+        this.setWidth(xEnd - xStart);
+        this.setHeight(yEnd - yStart);
     }
+
 
     /**
      * Calculate a scaled size value based upon the area (in pixels)

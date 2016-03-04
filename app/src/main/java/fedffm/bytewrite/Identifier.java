@@ -53,8 +53,8 @@ public class Identifier {
         //    1. pixelsUnknown:  How many (black) pixels the unidentified character contains
         //    2. pixelsSample:   How many (black) pixels the sample character contains
         //    3. pixelsMatching: How many (black) pixels are shared by BOTH characters
-        int pixelsUnknown = 0;
-        int pixelsSample = 0;
+        int pixelsUnknown  = 0;
+        int pixelsSample   = 0;
         int pixelsMatching = 0;
 
         // Iterate through the bitmap
@@ -85,20 +85,19 @@ public class Identifier {
         float areaSimilarity  = Math.min(areaSample, areaUnknown) / Math.max(areaSample, areaUnknown);
         float similarityScore = ((float)pixelsMatching / Math.max((float)pixelsSample, (float)pixelsUnknown)) * areaSimilarity;
 
-//        Log.i(LOG_TAG, "-----------------------");
-//        Log.i(LOG_TAG, "pixelsUnknown:  " + pixelsUnknown);
-//        Log.i(LOG_TAG, "pixelsSample:   " + pixelsSample);
-//        Log.i(LOG_TAG, "pixelsMatching: " + pixelsMatching);
-//        Log.i(LOG_TAG, "pixelsMatching / pixelsSample  = " + (float)pixelsMatching / (float)pixelsSample);
-//        Log.i(LOG_TAG, "pixelsMatching / pixelsUnknown = " + (float)pixelsMatching / (float)pixelsUnknown);
-//        Log.i(LOG_TAG, ".");
-//        Log.i(LOG_TAG, "area:            " + area);
-//        Log.i(LOG_TAG, "areaUnknown:     " + areaUnknown);
-//        Log.i(LOG_TAG, "areaSample:      " + areaSample);
-//        Log.i(LOG_TAG, "areaSimilarity:  " + areaSimilarity);
-//        Log.i(LOG_TAG, "similarityScore: " + similarityScore);
-//        Log.i(LOG_TAG, "============================================================================");
-//        Log.i(LOG_TAG, "============================================================================");
+        Log.i(LOG_TAG, "pixelsUnknown:  " + pixelsUnknown);
+        Log.i(LOG_TAG, "pixelsSample:   " + pixelsSample);
+        Log.i(LOG_TAG, "pixelsMatching: " + pixelsMatching);
+        Log.i(LOG_TAG, "pixelsMatching / pixelsSample  = " + (float)pixelsMatching / (float)pixelsSample);
+        Log.i(LOG_TAG, "pixelsMatching / pixelsUnknown = " + (float)pixelsMatching / (float)pixelsUnknown);
+        Log.i(LOG_TAG, ".");
+        Log.i(LOG_TAG, "area:            " + area);
+        Log.i(LOG_TAG, "areaUnknown:     " + areaUnknown);
+        Log.i(LOG_TAG, "areaSample:      " + areaSample);
+        Log.i(LOG_TAG, "areaSimilarity:  " + areaSimilarity);
+        Log.i(LOG_TAG, "similarityScore: " + similarityScore);
+        Log.i(LOG_TAG, "============================================================================");
+        Log.i(LOG_TAG, "============================================================================");
 
         //   0.0 == the two characters are completely different
         // 100.0 == the two characters are an identical match
@@ -137,6 +136,8 @@ public class Identifier {
             for (int j = 0; j < characterBase.size(); ++j) {
                 // Compare the bitmap of the unknown character against the current sample
                 Bitmap unknownScaled = matchSize(characterBase.get(j).getBitmap(), unknown.getBitmap());
+                Log.i(LOG_TAG, "character:             " + (char)i);
+                Log.i(LOG_TAG, "-----------------------");
                 float similarity = similarity(characterBase.get(j).getBitmap(), unknownScaled);
 
                 // Keep track of the best similarity for the current character
@@ -151,10 +152,13 @@ public class Identifier {
             float averageSimilarity = sum / (float)characterBase.size();
             float totalSimilarity   = (averageSimilarity + bestSimilarityCurrentChar) / (float)2.0;
 
-            Log.i(LOG_TAG, "character:           " + (char)i);
-            Log.i(LOG_TAG, "best for curren char: " + bestSimilarityCurrentChar);
-            Log.i(LOG_TAG, "average:              " + averageSimilarity);
-            Log.i(LOG_TAG, "total:                " + totalSimilarity);
+//            Log.i(LOG_TAG, "character:             " + (char)i);
+//            Log.i(LOG_TAG, "-----------------------");
+//            Log.i(LOG_TAG, "best for current char: " + bestSimilarityCurrentChar);
+//            Log.i(LOG_TAG, "average:               " + averageSimilarity);
+//            Log.i(LOG_TAG, "total:                 " + totalSimilarity);
+//            Log.i(LOG_TAG, "-----------------------");
+//            Log.i(LOG_TAG, "-----------------------");
 
             // Which character has the greatest similarity
             if (bestSimilarityCurrentChar > greatestSimilarity) {
@@ -169,7 +173,7 @@ public class Identifier {
 
             }
 
-            // Which character has the greatest similarity total
+            // Which character has the greatest similarity total (average + highest)
             if (totalSimilarity > greatestTotalSimilarity) {
                 greatestTotalSimilarity = totalSimilarity;
                 iGreatestTotal = i;
@@ -177,9 +181,13 @@ public class Identifier {
         }
 
         // Log
+        Log.i(LOG_TAG, "============================================================================");
+        Log.i(LOG_TAG, "============================================================================");
         Log.i(LOG_TAG, "Greatest similarity:         " + (char)iGreatest);
         Log.i(LOG_TAG, "Greatest average similarity: " + (char)iGreatestAverage);
         Log.i(LOG_TAG, "Greatest total similarity:   " + (char)iGreatestTotal);
+        Log.i(LOG_TAG, "============================================================================");
+        Log.i(LOG_TAG, "============================================================================");
 
         // Set the character name and ascii code
         unknown.setName((char)iGreatestTotal);
