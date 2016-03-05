@@ -19,6 +19,8 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import org.w3c.dom.Text;
+
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -43,11 +45,20 @@ public class MainActivity extends ActionBarActivity {
     private Button    retakeButton;
     private Button    cameraButton;
 
-    // Timing
+    // Timing views
+    private TextView greyscale;
+    private TextView binarize;
+    private TextView crop;
+    private TextView segment;
+    private TextView identify;
+    private TextView total;
+
     private TextView timeGreyscale;
     private TextView timeBinarize;
     private TextView timeCrop;
-    private TextView timeSegmentIdentify;
+    private TextView timeSegment;
+    private TextView timeIdentify;
+    private TextView timeTotal;
 
     // Character base
     private CharacterBase characterBase;
@@ -156,7 +167,7 @@ public class MainActivity extends ActionBarActivity {
         if (loadImage())
             confirm();
         else
-            setupViews();
+            getViewReferences();
 
         // Load the character base as an async task
         if (!loadingCharBase)
@@ -235,9 +246,9 @@ public class MainActivity extends ActionBarActivity {
     }
 
     /**
-     * When the activity starts up, display all of the necessary views
+     * When the activity starts up, get the references to each view
      */
-    private void setupViews() {
+    private void getViewReferences() {
         // Get references to our views
         image         = (ImageView)findViewById(R.id.imageView);
         cameraButton  = (Button)findViewById(R.id.button);
@@ -247,10 +258,18 @@ public class MainActivity extends ActionBarActivity {
         textBox       = (EditText)findViewById(R.id.content);
 
         // References to the timing views
+        greyscale           = (TextView)findViewById(R.id.greyscale);
+        binarize            = (TextView)findViewById(R.id.binarize);
+        crop                = (TextView)findViewById(R.id.crop);
+        segment             = (TextView)findViewById(R.id.seg);
+        identify            = (TextView)findViewById(R.id.identify);
+        total               = (TextView)findViewById(R.id.total);
         timeGreyscale       = (TextView)findViewById(R.id.timeGreyscale);
         timeBinarize        = (TextView)findViewById(R.id.timeBinarize);
         timeCrop            = (TextView)findViewById(R.id.timeCrop);
-        timeSegmentIdentify = (TextView)findViewById(R.id.timeIdentifySegment);
+        timeSegment         = (TextView)findViewById(R.id.timeSeg);
+        timeIdentify        = (TextView)findViewById(R.id.timeIdentify);
+        timeTotal           = (TextView)findViewById(R.id.timeTotal);
     }
 
     /**
@@ -311,41 +330,58 @@ public class MainActivity extends ActionBarActivity {
      */
     private void process() {
         // Time for each step in the process
-        long timeStart;
-        long timeEnd;
+        float timeStart;
+        float timeEnd;
 
         // Convert to greyscale
         timeStart = System.nanoTime();
         bitmap = Preprocessor.greyscale(bitmap);
         timeEnd = System.nanoTime();
-        final long greyscale = (timeEnd - timeStart) / 1000000;
+        final float secondsGreyscale = (timeEnd - timeStart) / 1000000000;
 
         // Binarize
         timeStart = System.nanoTime();
         bitmap = Preprocessor.binarize(bitmap);
         timeEnd = System.nanoTime();
-        final long binarize = (timeEnd - timeStart) / 1000000;
+        final float secondsBinarize = (timeEnd - timeStart) / 1000000000;
 
         // Crop
         timeStart = System.nanoTime();
         bitmap = Preprocessor.crop(bitmap);
         timeEnd = System.nanoTime();
-        final long crop = (timeEnd - timeStart) / 1000000;
+        final float secondsCrop = (timeEnd - timeStart) / 1000000000;
 
-        // Segment and Identify in one fell swoop
+        // Segment the characters
         timeStart = System.nanoTime();
-        final Word word = Identifier.identify(new Word(Preprocessor.segmentCharacters(bitmap)), this);
+        List<Character> characters = Preprocessor.segmentCharacters(bitmap);
         timeEnd = System.nanoTime();
-        final long segmentIdentify = (timeEnd - timeStart) / 1000000;
+        final float secondsSeg = (timeEnd - timeStart) / 1000000000;
+
+        // Identify
+        timeStart = System.nanoTime();
+        final Word word = Identifier.identify(new Word(characters), this);
+        timeEnd = System.nanoTime();
+        final float secondsId = (timeEnd - timeStart) / 1000000000;
+
+        // Total
+        final float secondsTotal = secondsGreyscale + secondsBinarize + secondsCrop + secondsSeg + secondsId;
 
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
             // Display each time
-            timeGreyscale.setText("greyscale " + greyscale + " ms");
-            timeBinarize.setText("binarization " + binarize + " ms");
-            timeCrop.setText("cropping " + crop + " ms");
-            timeSegmentIdentify.setText("segment & id " + segmentIdentify + " ms");
+            greyscale.setText("greyscale conversion");
+            binarize.setText("binarization");
+            crop.setText("cropping");
+            segment.setText("segmentation");
+            identify.setText("identification");
+            total.setText("total");
+            timeGreyscale.setText(String.format("%.2f", secondsGreyscale) + "s");
+            timeBinarize.setText(String.format("%.2f" , secondsBinarize)  + "s");
+            timeCrop.setText(String.format("%.2f"     , secondsCrop)      + "s");
+            timeSegment.setText(String.format("%.2f"  , secondsSeg)       + "s");
+            timeIdentify.setText(String.format("%.2f" , secondsId)        + "s");
+            timeTotal.setText(String.format("%.2f"    , secondsTotal)     + "s");
 
             // Display the word
             textBox.setText(word.getString());
