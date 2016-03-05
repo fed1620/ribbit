@@ -9,6 +9,8 @@ import java.util.InputMismatchException;
 import java.util.List;
 
 public class Identifier {
+    private final static boolean DETAILED_LOGGING = false;
+    private final static boolean LOGGING_ENABLED = true;
     private final static String LOG_TAG = "Identifier";
     private final static int    A_ASCII = 97;
     private final static int    Z_ASCII = 122;
@@ -66,7 +68,7 @@ public class Identifier {
         float pixelsUnknown = 0;
 
         // Calculate the area of both bitmaps
-        float area = (float)sampleBitmap.getWidth()  * (float)sampleBitmap.getHeight();
+        float area = (float)sampleBitmap.getWidth() * (float)sampleBitmap.getHeight();
 
         // Find out how many character pixels each bitmap contains
         for (int x = 0; x < sampleBitmap.getWidth(); ++x)
@@ -143,24 +145,28 @@ public class Identifier {
      * @return A percentage representing how similar the characters are
      */
     private static float similarity(Character sample, Character unknown) {
-        // Similarity array
-        float [] similarity = {
-                                dimensionalSimilarity(sample, unknown)       * 100,
-                                areaSimilarity(sample, unknown)              * 100 ,
-                                pixelDistributionSimilarity(sample, unknown) * 100
-                              };
+        // Similarity measurements
+        float dimensionalSimilarity       = dimensionalSimilarity(sample, unknown) * 100;
+        float areaSimilarity              = areaSimilarity(sample, unknown) * 100;
+        float pixelDistributionSimilarity = pixelDistributionSimilarity(sample, unknown) * 100;
+
+        // Apply weights
+        dimensionalSimilarity *= .5;
+        areaSimilarity*= .5;
+        pixelDistributionSimilarity *= .9;
 
         // Combine these values to produce a "similarity score"
-        float similarityScore = ((similarity[0] + similarity[1] + similarity[2]) / 3);
+        float similarityScore = (dimensionalSimilarity + areaSimilarity + pixelDistributionSimilarity) / 3;
 
-//        Log.i(LOG_TAG, "unknown w: " + unknown.getWidth() + " unknown h: " + unknown.getHeight());
-//        Log.i(LOG_TAG, "sample w:  " + sample.getWidth()  + " sample h:  " + sample.getHeight());
-//        Log.i(LOG_TAG, "dimensionalSimilarity:       " + similarity[0]);
-//        Log.i(LOG_TAG, "areaSimilarity:              " + similarity[1]);
-//        Log.i(LOG_TAG, "pixelDistributionSimilarity: " + similarity[2]);
-//        Log.i(LOG_TAG, "similarityScore:             " + similarityScore);
-//        Log.i(LOG_TAG, "============================================================================");
-//        Log.i(LOG_TAG, "============================================================================");
+        if (DETAILED_LOGGING) {
+            Log.i(LOG_TAG, "unknown w: " + unknown.getWidth() + " unknown h: " + unknown.getHeight());
+            Log.i(LOG_TAG, "sample w:  " + sample.getWidth()  + " sample h:  " + sample.getHeight());
+            Log.i(LOG_TAG, "dimensionalSimilarity:       " + dimensionalSimilarity);
+            Log.i(LOG_TAG, "areaSimilarity:              " + areaSimilarity);
+            Log.i(LOG_TAG, "pixelDistributionSimilarity: " + pixelDistributionSimilarity);
+            Log.i(LOG_TAG, "similarityScore:             " + similarityScore);
+            Log.i(LOG_TAG, "============================================================================");
+        }
 
         //   0.0 == the two characters are completely different
         // 100.0 == the two characters are an identical match
@@ -197,8 +203,10 @@ public class Identifier {
 
             // Iterate through each sample in the list for the current character
             for (int j = 0; j < characterBase.size(); ++j) {
-//                Log.i(LOG_TAG, "character:             " + (char)i);
-//                Log.i(LOG_TAG, "------------------------");
+                if (DETAILED_LOGGING) {
+                    Log.i(LOG_TAG, "character:             " + (char)i);
+                    Log.i(LOG_TAG, "------------------------");
+                }
 
                 // Compare the bitmap of the unknown character against the current sample
                 unknown.setBitmap(matchSize(characterBase.get(j), unknown));
@@ -216,13 +224,14 @@ public class Identifier {
             float averageSimilarity  = sum / (float)characterBase.size();
             float combinedSimilarity = (averageSimilarity + bestSimilarityCurrentChar) / (float)2.0;
 
-//            Log.i(LOG_TAG, "character:             " + (char)i);
-//            Log.i(LOG_TAG, "-----------------------");
-//            Log.i(LOG_TAG, "best for current char: " + bestSimilarityCurrentChar);
-//            Log.i(LOG_TAG, "average :              " + averageSimilarity);
-//            Log.i(LOG_TAG, "combined:              " + combinedSimilarity);
-//            Log.i(LOG_TAG, "-----------------------");
-//            Log.i(LOG_TAG, "-----------------------");
+            if (LOGGING_ENABLED) {
+                Log.i(LOG_TAG, "character:             " + (char)i);
+                Log.i(LOG_TAG, "-----------------------");
+                Log.i(LOG_TAG, "best for current char: " + bestSimilarityCurrentChar);
+                Log.i(LOG_TAG, "average :              " + averageSimilarity);
+                Log.i(LOG_TAG, "combined:              " + combinedSimilarity);
+                Log.i(LOG_TAG, "-----------------------");
+            }
 
             // Which character has the greatest similarity
             if (bestSimilarityCurrentChar > greatestSimilarity) {
@@ -245,17 +254,19 @@ public class Identifier {
         }
 
         // Log
-        Log.i(LOG_TAG, "============================================================================");
-        Log.i(LOG_TAG, "============================================================================");
-        Log.i(LOG_TAG, "Greatest similarity:          " + (char)iGreatest + " - " + greatestSimilarity);
-        Log.i(LOG_TAG, "Greatest average similarity:  " + (char)iGreatestAverage + " - " + greatestAverage);
-        Log.i(LOG_TAG, "Greatest combined similarity: " + (char)iGreatestCombined + " - " + greatestCombined);
-        Log.i(LOG_TAG, "============================================================================");
-        Log.i(LOG_TAG, "============================================================================");
+        if (LOGGING_ENABLED) {
+            Log.i(LOG_TAG, "============================================================================");
+            Log.i(LOG_TAG, "============================================================================");
+            Log.i(LOG_TAG, "Greatest similarity:          " + (char)iGreatest + " - " + greatestSimilarity);
+            Log.i(LOG_TAG, "Greatest average similarity:  " + (char)iGreatestAverage + " - " + greatestAverage);
+            Log.i(LOG_TAG, "Greatest combined similarity: " + (char)iGreatestCombined + " - " + greatestCombined);
+            Log.i(LOG_TAG, "============================================================================");
+            Log.i(LOG_TAG, "============================================================================");
+        }
 
         // Set the character name and ascii code
-        unknown.setName((char)iGreatestCombined);
-        unknown.setAscii(iGreatestCombined);
+        unknown.setName((char)iGreatestAverage);
+        unknown.setAscii(iGreatestAverage);
 
         return unknown;
     }
