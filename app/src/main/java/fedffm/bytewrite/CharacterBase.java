@@ -3,6 +3,7 @@ package fedffm.bytewrite;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.graphics.BitmapFactory;
+import android.util.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -105,6 +106,25 @@ public class CharacterBase {
             character.setName(characterName);
             character.setAscii((int)characterName);
             addNewCharacter(character);
+
+            String ratioClass = null;
+
+            switch(character.getRatioClass()) {
+                case 1:
+                    ratioClass = "Tall";
+                    break;
+
+                case 0:
+                    ratioClass = "Even";
+                    break;
+
+                case -1:
+                    ratioClass = "Wide";
+                    break;
+            }
+
+            // Debug
+            Log.i(LOG_TAG, character.getName() + " is " + ratioClass);
         }
     }
 
