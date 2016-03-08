@@ -208,9 +208,18 @@ public class Identifier {
             }
         }
 
+        // Which was the most commonly occuring measurement?
+        int index;
+
+        if (iGreatest == iGreatestAverage || iGreatest == iGreatestCombined)
+            index = iGreatest;
+        else
+            index = iGreatestCombined;
+
+
         // Set the character name and ascii code
-        unknown.setName((char)iGreatestAverage);
-        unknown.setAscii(iGreatestAverage);
+        unknown.setName((char)index);
+        unknown.setAscii(index);
 
         // Log
         if (LOGGING_ENABLED) {
