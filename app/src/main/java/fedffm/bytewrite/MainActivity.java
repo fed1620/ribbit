@@ -82,9 +82,12 @@ public class MainActivity extends ActionBarActivity {
         protected String doInBackground(String... params) {
             // Make sure we're pulling characters from the character base
             List<Character> characters;
+            float timeStart;
 
             try {
+                // Keep track of how long it takes to load the character base
                 loadingCharBase = true;
+                timeStart = System.nanoTime();
 
                 // Instantiate the singleton character base
                 characterBase = CharacterBase.getInstance(MainActivity.this);
@@ -94,7 +97,10 @@ public class MainActivity extends ActionBarActivity {
                 Log.e("LongOperation", "Interrupted", e);
                 return "Interrupted";
             }
-            return characters.size() + " / " + CharacterBase.getInstance(MainActivity.this).size() + " samples loaded";
+
+            float timeEnd = System.nanoTime();
+            float secondsLoad = (timeEnd - timeStart) / 1000000000;
+            return characters.size() + " / " + CharacterBase.getInstance(MainActivity.this).size() + " samples loaded in " + secondsLoad + " seconds";
         }
 
         @Override

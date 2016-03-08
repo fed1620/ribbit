@@ -32,9 +32,10 @@ public class CharacterBase {
         return instance;
     }
 
-    // Log tag
-    private final static String LOG_TAG = "CharacterBase";
-    private final static String ASSET_FOLDER = "characters";
+    // Folder that contains all character samples
+    private final static String ASSET_FOLDER = "characters/";
+    private final static int    A_ASCII = 97;
+    private final static int    Z_ASCII = 122;
 
     // The list of known characters
     private List<Character> characters;
@@ -51,15 +52,12 @@ public class CharacterBase {
         List<String> assetPaths = new ArrayList<>();
 
         // Get the array of folders and the array of files for each folder
-        String[] folders = context.getAssets().list(directory);
-        String[] files;
+        for (int i = A_ASCII; i <= Z_ASCII; ++i) {
+            String path = directory + (char)i;
 
-        // Loop through all the folders in the directory
-        for (String folder : folders) {
-            files = context.getAssets().list(directory + "/" + folder);
-            // Loop through all the files in each folder
-            for (String file : files) {
-                assetPaths.add(directory + "/" + folder + "/" + file);
+            String[] files = context.getAssets().list(path);
+            for (String file: files) {
+                assetPaths.add(path + "/" + file);
             }
         }
         return assetPaths;
@@ -106,25 +104,6 @@ public class CharacterBase {
             character.setName(characterName);
             character.setAscii((int)characterName);
             addNewCharacter(character);
-
-            String ratioClass = null;
-
-            switch(character.getRatioClass()) {
-                case 1:
-                    ratioClass = "Tall";
-                    break;
-
-                case 0:
-                    ratioClass = "Even";
-                    break;
-
-                case -1:
-                    ratioClass = "Wide";
-                    break;
-            }
-
-            // Debug
-            Log.i(LOG_TAG, character.getName() + " is " + ratioClass);
         }
     }
 
