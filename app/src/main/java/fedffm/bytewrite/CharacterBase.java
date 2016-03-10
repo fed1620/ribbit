@@ -83,6 +83,7 @@ public class CharacterBase {
         // Create an input stream
         InputStream inputStream = null;
 
+        int numIntersect = 0;
         // Load each file referenced in the list of asset paths
         for (int i = 0; i < assetPaths.size(); ++i) {
             // Get the name of the current file
@@ -102,9 +103,15 @@ public class CharacterBase {
             // object
             Character character = new Character(BitmapFactory.decodeStream(inputStream));
             character.setName(characterName);
-            character.setAscii((int)characterName);
+            character.setAscii((int) characterName);
             addNewCharacter(character);
+
+//            if (character.getFeatureClass() == 4) {
+//                Log.i("CharacterBase", "intersect: " + character.getName());
+//                numIntersect++;
+//            }
         }
+//        Log.i("CharacterBase", numIntersect + " intersect characters");
     }
 
     /**
