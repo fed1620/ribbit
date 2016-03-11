@@ -150,7 +150,8 @@ public class Identifier {
             // Iterate through each sample in the list for the current character
             for (int j = 0; j < characterBase.size(); ++j) {
                 // Compare the bitmap of the unknown character against the current sample
-                if (unknown.getRatioClass() != characterBase.get(j).getRatioClass())
+                if (unknown.getRatioClass()   != characterBase.get(j).getRatioClass() ||
+                    unknown.getFeatureClass() != characterBase.get(j).getFeatureClass())
                     continue;
 
                 // Log which character

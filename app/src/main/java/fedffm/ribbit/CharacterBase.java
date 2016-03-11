@@ -34,8 +34,9 @@ public class CharacterBase {
 
     // Folder that contains all character samples
     private final static String ASSET_FOLDER = "characters/";
-    private final static int    A_ASCII = 97;
-    private final static int    Z_ASCII = 122;
+    private final static int    A_ASCII   = 97;
+    private final static int    Z_ASCII   = 122;
+    private final static int    NUM_FILES = 20;
 
     // The list of known characters
     private List<Character> characters;
@@ -53,11 +54,9 @@ public class CharacterBase {
 
         // Get the array of folders and the array of files for each folder
         for (int i = A_ASCII; i <= Z_ASCII; ++i) {
-            String path = directory + (char)i;
-
-            String[] files = context.getAssets().list(path);
-            for (String file: files) {
-                assetPaths.add(path + "/" + file);
+            String path = directory + (char)i + "/";
+            for (int j = 1; j <= NUM_FILES; ++j) {
+                assetPaths.add(path + j + ".jpg");
             }
         }
         return assetPaths;
@@ -83,7 +82,8 @@ public class CharacterBase {
         // Create an input stream
         InputStream inputStream = null;
 
-        int numIntersect = 0;
+        int numFeatureType = 0;
+        int featureType    = 4;
         // Load each file referenced in the list of asset paths
         for (int i = 0; i < assetPaths.size(); ++i) {
             // Get the name of the current file
@@ -106,12 +106,12 @@ public class CharacterBase {
             character.setAscii((int) characterName);
             addNewCharacter(character);
 
-            if (character.getFeatureClass() == 4) {
-                Log.i("CharacterBase", "intersect: " + character.getName());
-                numIntersect++;
+            if (character.getFeatureClass() == featureType) {
+                Log.i("CharacterBase", "featureType " + featureType + ": " + character.getName());
+                numFeatureType++;
             }
         }
-        Log.i("CharacterBase", numIntersect + " intersect characters");
+        Log.i("CharacterBase", numFeatureType + " featureType " + featureType + " characters");
     }
 
     /**

@@ -101,9 +101,16 @@ public class Character {
      *      l
      */
     private void determineFeatureClass() {
+        // Determine the feature class
+        int []  rowWidths  = new int[bitmap.getHeight()];
+        boolean disconnect = this.isDisconnect(rowWidths);
+        boolean intersect  = this.isIntersect(rowWidths);
 
-
-        //____________________________________ENCLOSED SPACE______________________________________//
+        // Assign feature class accordingly
+        if (disconnect)
+            this.featureClass = 3;
+        else if (intersect)
+            this.featureClass = 4;
 
         ////////////////////////////////////////////////////////////////////////////////////////////
         //                                                                                        //
@@ -120,71 +127,107 @@ public class Character {
         //                                                                                        //
         ////////////////////////////////////////////////////////////////////////////////////////////
 
+    }
 
-        //____________________________________DISCONNECT__________________________________________//
-        Map<Integer, List<Integer>> coordinates = new HashMap<>();
-        int [] rowWidths = new int[bitmap.getHeight()];
+    /**
+     * Does the character contain any area of white pixels that are completely
+     * surrounded by black pixels? The characters that should meet this criteria are:
+     *      1. a
+     *      2. e
+     *      3. o
+     *
+     *                     BLACK PIXELS BLACK PIXELS BLACK PIXELS
+     *                 BlACK PIXELS --> WHITE PIXELS --> BLACK PIXELS
+     *          BLACK PIXELS ---------> WHITE PIXELS ---------> BLACK PIXELS
+     *  BLACK PIXELS -----------------> WHITE PIXELS-----------------> BLACK PIXELS
+     *          BLACK PIXELS ---------> WHITE PIXELS ---------> BLACK PIXELS
+     *                 BlACK PIXELS --> WHITE PIXELS --> BLACK PIXELS
+     *                     BLACK PIXELS BLACK PIXELS BLACK PIXELS
+     *
+     * @return True if the character contains enclosed whitespace
+     */
+    private boolean hasEnclosedSpace() {
+        return false;
+    }
+
+    /**
+     * Is the character disconnected at any point? The characters that should
+     * meet this criteria are:
+     *      1. i
+     *      2. j
+     *
+     * @param rowWidths The width (in black pixels) of each row of the character
+     * @return True if the character is a disconnect character
+     */
+    private boolean isDisconnect(int [] rowWidths) {
         for (int y = 0; y < bitmap.getHeight(); ++y) {
-            List<Integer> xCoords = new ArrayList<>();
             int numBlackPixelsInRow = 0;
 
             // Iterate across the row from left to right
             for (int x = 0; x < bitmap.getWidth(); ++x) {
                 boolean pixelIsBlack = bitmap.getPixel(x, y) < Color.rgb(10, 10, 10);
                 if (pixelIsBlack) {
-                    xCoords.add(1);
                     numBlackPixelsInRow++;
                 }
-                else {
-                    xCoords.add(0);
-                }
             }
-
-            // Store the coordinates the map
-            coordinates.put(y, xCoords);
 
             // Store how wide each row is in an array
             rowWidths[y] = numBlackPixelsInRow;
 
             // If there is a row without any black pixels, it is a disconnect character
             if (numBlackPixelsInRow == 0)
-                this.featureClass = 3;
+                return true;
         }
+        return false;
+    }
 
-        //____________________________________INTERSECT___________________________________________//
-        float widthMultiplier = 3.25f;
+    /**
+     * Is the character intersected at any point? The characters that should
+     * meet this criteria are:
+     *      1. f
+     *      2. t
+     *
+     * @param rowWidths The width (in black pixels) of each row of the character
+     * @return True if the character is an intersect character
+     */
+    private boolean isIntersect(int [] rowWidths) {
+        boolean possibleIntersectChar = false;
+        float   widthMultiplier       = 3.25f;
+        int     numSuddenChanges      = 0;
+        int     indexLastWidthChange  = 0;
 
-        for (int i = 0; i < rowWidths.length; ++i) {
+        for (int i = 1; i < rowWidths.length; ++i) {
+            int currentRow = rowWidths[i];
+
+            // How many sudden changes in width are there?
+            if (currentRow >= (rowWidths[i -1] + 4)) {
+                if (indexLastWidthChange == 0 || i >= indexLastWidthChange + 15) {
+                    indexLastWidthChange = i;
+                    numSuddenChanges++;
+                }
+            }
+
+
+            // Is the current row unusually "wide" or not?
             if (i < 12 || i > rowWidths.length - 13)
                 continue;
 
             boolean wideRow = (rowWidths[i] >= (rowWidths[i - 12] * widthMultiplier) &&
-                               rowWidths[i] >= (rowWidths[i - 11] * widthMultiplier) &&
-                               rowWidths[i] >= (rowWidths[i - 10] * widthMultiplier) &&
-                               rowWidths[i] >= (rowWidths[i - 9]  * widthMultiplier) &&
+                    rowWidths[i] >= (rowWidths[i - 11] * widthMultiplier) &&
+                    rowWidths[i] >= (rowWidths[i - 10] * widthMultiplier) &&
+                    rowWidths[i] >= (rowWidths[i - 9]  * widthMultiplier) &&
 
-                               rowWidths[i] >= (rowWidths[i + 9]  * widthMultiplier) &&
-                               rowWidths[i] >= (rowWidths[i + 10] * widthMultiplier) &&
-                               rowWidths[i] >= (rowWidths[i + 11] * widthMultiplier) &&
-                               rowWidths[i] >= (rowWidths[i + 12] * widthMultiplier));
+                    rowWidths[i] >= (rowWidths[i + 9]  * widthMultiplier) &&
+                    rowWidths[i] >= (rowWidths[i + 10] * widthMultiplier) &&
+                    rowWidths[i] >= (rowWidths[i + 11] * widthMultiplier) &&
+                    rowWidths[i] >= (rowWidths[i + 12] * widthMultiplier));
 
-            if (wideRow) {
-                this.featureClass = 4;
-            }
+            if (wideRow)
+                possibleIntersectChar = true;
         }
-
-        if (this.featureClass == 4)
-            for (int i = 0; i < rowWidths.length; ++i) {
-                // Print out ASCII art for the intersect characters
-                String row = "";
-                for (int j = 0; j < coordinates.get(i).size(); ++j) {
-                    row += coordinates.get(i).get(j);
-                }
-
-                Log.i(LOG_TAG, "row " + i + ": " + row);
-            }
+        // Character should suddenly widen in no more than 2 areas of the bitmap
+        return possibleIntersectChar && numSuddenChanges < 3;
     }
-
 
     /**
      * Calculate a scaled size value based upon the area (in pixels)
