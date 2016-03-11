@@ -2,13 +2,16 @@ package fedffm.ribbit;
 
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 
 public class Character {
+    private static final String LOG_TAG = "Character";
 
     private char    name;
     private int     ascii;
@@ -119,18 +122,26 @@ public class Character {
 
 
         //____________________________________DISCONNECT__________________________________________//
-        Map<Integer, List<String>> coordinates = new HashMap<>();
+        Map<Integer, List<Integer>> coordinates = new HashMap<>();
         int [] rowWidths = new int[bitmap.getHeight()];
         for (int y = 0; y < bitmap.getHeight(); ++y) {
+            List<Integer> xCoords = new ArrayList<>();
             int numBlackPixelsInRow = 0;
 
             // Iterate across the row from left to right
             for (int x = 0; x < bitmap.getWidth(); ++x) {
                 boolean pixelIsBlack = bitmap.getPixel(x, y) < Color.rgb(10, 10, 10);
                 if (pixelIsBlack) {
+                    xCoords.add(1);
                     numBlackPixelsInRow++;
                 }
+                else {
+                    xCoords.add(0);
+                }
             }
+
+            // Store the coordinates the map
+            coordinates.put(y, xCoords);
 
             // Store how wide each row is in an array
             rowWidths[y] = numBlackPixelsInRow;
@@ -157,9 +168,21 @@ public class Character {
                                rowWidths[i] >= (rowWidths[i + 11] * widthMultiplier) &&
                                rowWidths[i] >= (rowWidths[i + 12] * widthMultiplier));
 
-            if (wideRow)
+            if (wideRow) {
                 this.featureClass = 4;
+            }
         }
+
+        if (this.featureClass == 4)
+            for (int i = 0; i < rowWidths.length; ++i) {
+                // Print out ASCII art for the intersect characters
+                String row = "";
+                for (int j = 0; j < coordinates.get(i).size(); ++j) {
+                    row += coordinates.get(i).get(j);
+                }
+
+                Log.i(LOG_TAG, "row " + i + ": " + row);
+            }
     }
 
 
