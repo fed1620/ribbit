@@ -1,4 +1,4 @@
-package fedffm.bytewrite;
+package fedffm.ribbit;
 
 import android.content.Context;
 import android.content.res.AssetManager;
@@ -106,12 +106,12 @@ public class CharacterBase {
             character.setAscii((int) characterName);
             addNewCharacter(character);
 
-//            if (character.getFeatureClass() == 4) {
-//                Log.i("CharacterBase", "intersect: " + character.getName());
-//                numIntersect++;
-//            }
+            if (character.getFeatureClass() == 4) {
+                Log.i("CharacterBase", "intersect: " + character.getName());
+                numIntersect++;
+            }
         }
-//        Log.i("CharacterBase", numIntersect + " intersect characters");
+        Log.i("CharacterBase", numIntersect + " intersect characters");
     }
 
     /**

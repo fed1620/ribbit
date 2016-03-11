@@ -1,4 +1,4 @@
-package fedffm.bytewrite;
+package fedffm.ribbit;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;

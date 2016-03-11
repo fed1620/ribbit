@@ -1,8 +1,11 @@
-package fedffm.bytewrite;
+package fedffm.ribbit;
 
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.util.Log;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 public class Character {
@@ -25,7 +28,7 @@ public class Character {
         this.name         = '?';
         this.bitmap       = bitmap;
         this.determineRatioClass();
-//        this.determineFeatureClass();
+        this.determineFeatureClass();
     }
 
     // Setters
@@ -116,6 +119,7 @@ public class Character {
 
 
         //____________________________________DISCONNECT__________________________________________//
+        Map<Integer, List<String>> coordinates = new HashMap<>();
         int [] rowWidths = new int[bitmap.getHeight()];
         for (int y = 0; y < bitmap.getHeight(); ++y) {
             int numBlackPixelsInRow = 0;
@@ -128,35 +132,30 @@ public class Character {
                 }
             }
 
+            // Store how wide each row is in an array
             rowWidths[y] = numBlackPixelsInRow;
 
+            // If there is a row without any black pixels, it is a disconnect character
             if (numBlackPixelsInRow == 0)
                 this.featureClass = 3;
         }
 
+        //____________________________________INTERSECT___________________________________________//
+        float widthMultiplier = 3.25f;
+
         for (int i = 0; i < rowWidths.length; ++i) {
-            if (i < 12 || i > rowWidths.length - 12)
+            if (i < 12 || i > rowWidths.length - 13)
                 continue;
 
-            boolean wideRow = (rowWidths[i] >= (rowWidths[i - 12] * 3) &&
-                               rowWidths[i] >= (rowWidths[i - 11] * 3) &&
-                               rowWidths[i] >= (rowWidths[i - 10] * 3) &&
-                               rowWidths[i] >= (rowWidths[i - 9] * 3) &&
-                               rowWidths[i] >= (rowWidths[i - 8] * 3) &&
-                               rowWidths[i] >= (rowWidths[i - 7] * 3) &&
-                               rowWidths[i] >= (rowWidths[i - 6] * 3) &&
-                               rowWidths[i] >= (rowWidths[i - 5] * 3) &&
-                               rowWidths[i] >= (rowWidths[i - 4] * 3) &&
+            boolean wideRow = (rowWidths[i] >= (rowWidths[i - 12] * widthMultiplier) &&
+                               rowWidths[i] >= (rowWidths[i - 11] * widthMultiplier) &&
+                               rowWidths[i] >= (rowWidths[i - 10] * widthMultiplier) &&
+                               rowWidths[i] >= (rowWidths[i - 9]  * widthMultiplier) &&
 
-                               rowWidths[i] >= (rowWidths[i + 4] * 3) &&
-                               rowWidths[i] >= (rowWidths[i + 5] * 3) &&
-                               rowWidths[i] >= (rowWidths[i + 6] * 3) &&
-                               rowWidths[i] >= (rowWidths[i + 7] * 3) &&
-                               rowWidths[i] >= (rowWidths[i + 8] * 3) &&
-                               rowWidths[i] >= (rowWidths[i + 9] * 3) &&
-                               rowWidths[i] >= (rowWidths[i + 10] * 3) &&
-                               rowWidths[i] >= (rowWidths[i + 11] * 3) &&
-                               rowWidths[i] >= (rowWidths[i + 12] * 3));
+                               rowWidths[i] >= (rowWidths[i + 9]  * widthMultiplier) &&
+                               rowWidths[i] >= (rowWidths[i + 10] * widthMultiplier) &&
+                               rowWidths[i] >= (rowWidths[i + 11] * widthMultiplier) &&
+                               rowWidths[i] >= (rowWidths[i + 12] * widthMultiplier));
 
             if (wideRow)
                 this.featureClass = 4;

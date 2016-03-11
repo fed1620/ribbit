@@ -1,4 +1,4 @@
-package fedffm.bytewrite;
+package fedffm.ribbit;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;

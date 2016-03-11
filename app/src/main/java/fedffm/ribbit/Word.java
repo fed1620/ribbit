@@ -1,4 +1,4 @@
-package fedffm.bytewrite;
+package fedffm.ribbit;
 
 import java.util.ArrayList;
 import java.util.List;

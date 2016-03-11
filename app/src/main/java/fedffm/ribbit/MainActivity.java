@@ -1,4 +1,4 @@
-package fedffm.bytewrite;
+package fedffm.ribbit;
 
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -120,9 +120,9 @@ public class MainActivity extends ActionBarActivity {
      */
     class Processor extends AsyncTask<String, Void, String> {
         // Get references to the loading elements
-        TextView loading = (TextView) findViewById(R.id.loading);
-        TextView wait    = (TextView) findViewById(R.id.wait);
-        ProgressBar progressBar = (ProgressBar) findViewById(R.id.progressBar);
+        TextView loading = (TextView) findViewById(fedffm.ribbit.R.id.loading);
+        TextView wait    = (TextView) findViewById(fedffm.ribbit.R.id.wait);
+        ProgressBar progressBar = (ProgressBar) findViewById(fedffm.ribbit.R.id.progressBar);
 
         @Override
         protected void onPreExecute() {
@@ -163,7 +163,7 @@ public class MainActivity extends ActionBarActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(fedffm.ribbit.R.layout.activity_main);
 
         if (DETAILED_LOGGING)
             Log.i(LOG_TAG, "onCreate() fired");
@@ -182,7 +182,7 @@ public class MainActivity extends ActionBarActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
+        getMenuInflater().inflate(fedffm.ribbit.R.menu.menu_main, menu);
         return true;
     }
 
@@ -194,7 +194,7 @@ public class MainActivity extends ActionBarActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == fedffm.ribbit.R.id.action_settings) {
             return true;
         }
 
@@ -255,26 +255,26 @@ public class MainActivity extends ActionBarActivity {
      */
     private void getViewReferences() {
         // Get references to our views
-        image         = (ImageView)findViewById(R.id.imageView);
-        cameraButton  = (Button)findViewById(R.id.button);
-        processButton = (Button)findViewById(R.id.processButton);
-        retakeButton  = (Button)findViewById(R.id.retakeButton);
-        instructions  = (TextView)findViewById(R.id.textView);
-        textBox       = (EditText)findViewById(R.id.content);
+        image         = (ImageView)findViewById(fedffm.ribbit.R.id.imageView);
+        cameraButton  = (Button)findViewById(fedffm.ribbit.R.id.button);
+        processButton = (Button)findViewById(fedffm.ribbit.R.id.processButton);
+        retakeButton  = (Button)findViewById(fedffm.ribbit.R.id.retakeButton);
+        instructions  = (TextView)findViewById(fedffm.ribbit.R.id.textView);
+        textBox       = (EditText)findViewById(fedffm.ribbit.R.id.content);
 
         // References to the timing views
-        greyscale           = (TextView)findViewById(R.id.greyscale);
-        binarize            = (TextView)findViewById(R.id.binarize);
-        crop                = (TextView)findViewById(R.id.crop);
-        segment             = (TextView)findViewById(R.id.seg);
-        identify            = (TextView)findViewById(R.id.identify);
-        total               = (TextView)findViewById(R.id.total);
-        timeGreyscale       = (TextView)findViewById(R.id.timeGreyscale);
-        timeBinarize        = (TextView)findViewById(R.id.timeBinarize);
-        timeCrop            = (TextView)findViewById(R.id.timeCrop);
-        timeSegment         = (TextView)findViewById(R.id.timeSeg);
-        timeIdentify        = (TextView)findViewById(R.id.timeIdentify);
-        timeTotal           = (TextView)findViewById(R.id.timeTotal);
+        greyscale           = (TextView)findViewById(fedffm.ribbit.R.id.greyscale);
+        binarize            = (TextView)findViewById(fedffm.ribbit.R.id.binarize);
+        crop                = (TextView)findViewById(fedffm.ribbit.R.id.crop);
+        segment             = (TextView)findViewById(fedffm.ribbit.R.id.seg);
+        identify            = (TextView)findViewById(fedffm.ribbit.R.id.identify);
+        total               = (TextView)findViewById(fedffm.ribbit.R.id.total);
+        timeGreyscale       = (TextView)findViewById(fedffm.ribbit.R.id.timeGreyscale);
+        timeBinarize        = (TextView)findViewById(fedffm.ribbit.R.id.timeBinarize);
+        timeCrop            = (TextView)findViewById(fedffm.ribbit.R.id.timeCrop);
+        timeSegment         = (TextView)findViewById(fedffm.ribbit.R.id.timeSeg);
+        timeIdentify        = (TextView)findViewById(fedffm.ribbit.R.id.timeIdentify);
+        timeTotal           = (TextView)findViewById(fedffm.ribbit.R.id.timeTotal);
     }
 
     /**
@@ -311,7 +311,7 @@ public class MainActivity extends ActionBarActivity {
         bitmap = Preprocessor.load(imagePath);
 
         // Put it into the Image View
-        image = (ImageView) findViewById(R.id.imageView);
+        image = (ImageView) findViewById(fedffm.ribbit.R.id.imageView);
         image.setImageBitmap(bitmap);
         image.setVisibility(View.VISIBLE);
         return true;
