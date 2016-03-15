@@ -101,23 +101,25 @@ public class Character {
      *      l
      */
     private void determineFeatureClass() {
-        // Determine the feature class
+        // Use this to record how many black pixels are in each row
         int []  rowWidths  = new int[bitmap.getHeight()];
 
         // Map all of the pixels
         Map <Integer, List<Integer>> pixels = new HashMap<>();
+        this.mapPixels(rowWidths, pixels);
 
-
-        mapPixels(rowWidths, pixels);
+        // Determine which feature class the character falls under
         boolean disconnect = this.isDisconnect(rowWidths);
         boolean intersect  = this.isIntersect(rowWidths);
-        boolean openTops   = this.hasOpenTop(rowWidths, pixels);
+        boolean openTop    = this.hasOpenTop(pixels);
 
         // Assign feature class accordingly
         if (disconnect)
             this.featureClass = 3;
-        else if (intersect)
+        if (intersect)
             this.featureClass = 4;
+        if (openTop)
+            this.featureClass = 5;
     }
 
     /**
@@ -146,6 +148,31 @@ public class Character {
             rowWidths[y] = numBlackPixelsInRow;
             pixels.put(y, xCoordinates);
         }
+    }
+
+    /**
+     * Output an ASCII map of the character's pixels
+     * @param pixels Each entry represents a row of black and white pixels
+     */
+    private void debug(Map<Integer, List<Integer>> pixels) {
+        for (int i = 0; i < pixels.size(); ++i) {
+            // Print out ASCII art for the intersect characters
+            String row = "";
+            for (int j = 0; j < pixels.get(i).size(); ++j) {
+                row += pixels.get(i).get(j);
+            }
+
+            String rowMarker;
+
+            if (i < 10)
+                rowMarker = "row  " + i + ": ";
+            else
+                rowMarker = "row " + i + ": ";
+
+            Log.i(LOG_TAG, rowMarker + row);
+        }
+        Log.i(LOG_TAG, "=========================================================================");
+        Log.i(LOG_TAG, "=========================================================================");
     }
 
     /**
@@ -179,8 +206,8 @@ public class Character {
      * @return True if the character is a disconnect character
      */
     private boolean isDisconnect(int [] rowWidths) {
-        for (int i = 0; i < rowWidths.length; ++i)
-            if (rowWidths[i] == 0)
+        for (int rowWidth : rowWidths)
+            if (rowWidth == 0)
                 return true;
         return false;
     }
@@ -241,30 +268,100 @@ public class Character {
      *      3. w
      *      4. y
      *
-     * @param rowWidths The width (in black pixels) of each row of the character
+     * @param pixels Each entry represents a row of black and white pixels
      * @return True if the character has an open top
      */
-    private boolean hasOpenTop(int [] rowWidths, Map<Integer, List<Integer>> pixels) {
-        for (int i = 0; i < rowWidths.length; ++i) {
-            // Print out ASCII art for the intersect characters
-            String row = "";
-            for (int j = 0; j < pixels.get(i).size(); ++j) {
-                row += pixels.get(i).get(j);
+    private boolean hasOpenTop(Map<Integer, List<Integer>> pixels) {
+        List<Integer> xCoordinates = new ArrayList<>();
+        List<Integer> yCoordinates = new ArrayList<>();
+        int topLeftBlackPixelX = 0;
+        int topLeftBlackPixelY = 0;
+
+        int topRightBlackPixelX = 0;
+        int topRightBlackPixelY = 0;
+
+        // Each iteration is a row in the bitmap
+        for (int y = 0; y < pixels.size(); ++y) {
+            boolean startingPointReached = false;
+
+            // Each iteration is a pixel in the current row
+            for (int x = 0; x < pixels.get(y).size(); ++x) {
+                if (x >= pixels.get(y).size()/2)
+                    // Top-right black pixel has not been set..
+                    if (topRightBlackPixelX == 0 && topRightBlackPixelY == 0) {
+                        if (pixels.get(y).get(x) == 1){
+
+                            // Find the top-right black pixel
+                            if ((x == pixels.get(y).size() - 1)) {
+                                topRightBlackPixelX = x;
+                                topRightBlackPixelY = y;
+                                pixels.get(y).set(x, 9);
+                            }
+                            else if (pixels.get(y).get(x + 1) == 0) {
+                                topRightBlackPixelX = x;
+                                topRightBlackPixelY = y;
+                                pixels.get(y).set(x, 9);
+                            }
+                        }
+                    }
+                    else
+                        break;
+
+
+
+                // Find the top-left black pixel
+                if ((topLeftBlackPixelX == 0 && topLeftBlackPixelY == 0) &&
+                        pixels.get(y).get(x) == 1) {
+                    topLeftBlackPixelX = x;
+                    topLeftBlackPixelY = y;
+                    pixels.get(y).set(x, 3);
+                }
+
+                // Record our starting point
+                if (!startingPointReached         &&
+                    pixels.get(y).get(x)     == 1 &&
+                    pixels.get(y).get(x + 1) == 0 &&
+                    pixels.get(y).get(x + 2) == 0) {
+                    pixels.get(y).set(x, 6);
+                    startingPointReached = true;
+                }
+
+                if (!startingPointReached)
+                    continue;
+
+                // As long as the current pixel is white, move down
+                while (y < pixels.size() - 1 && x < pixels.get(y).size() - 1 && pixels.get(y).get(x) == 0) {
+                    y++;
+
+                    // If we run into a black pixel, move to the right
+                    if (pixels.get(y).get(x) == 1) {
+                        pixels.get(y).set(x, 2);
+                        xCoordinates.add(x);
+                        yCoordinates.add(y);
+                        x++;
+                    }
+                }
             }
-
-            String rowMarker;
-
-            if (i < 10)
-                rowMarker = "row  " + i + ": ";
-            else
-                rowMarker = "row " + i + ": ";
-
-            Log.i(LOG_TAG, rowMarker + row);
         }
-        Log.i(LOG_TAG, "=========================================================================");
-        Log.i(LOG_TAG, "=========================================================================");
+        // Find where our marker left off
+        if (!xCoordinates.isEmpty() && !yCoordinates.isEmpty()) {
+            int xPosition = xCoordinates.get(xCoordinates.size() - 1);
+            int yPosition = yCoordinates.get(yCoordinates.size() - 1);
 
-        return false;
+            // Attempt to find a clean route back up to the top of the bitmap
+            for (int i = yPosition; i >= 0; i--) {
+                if (pixels.get(i).get(xPosition) == 1)
+                    return false;
+                pixels.get(i).set(xPosition, 4);
+            }
+        }
+        else
+            return false;
+
+        debug(pixels);
+
+
+        return true;
     }
 
     /**

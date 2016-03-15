@@ -83,7 +83,7 @@ public class CharacterBase {
         InputStream inputStream = null;
 
         int numFeatureType = 0;
-        int featureType    = 4;
+        int featureType    = -1;
         // Load each file referenced in the list of asset paths
         for (int i = 0; i < assetPaths.size(); ++i) {
             // Get the name of the current file
