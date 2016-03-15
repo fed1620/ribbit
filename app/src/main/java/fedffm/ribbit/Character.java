@@ -103,30 +103,49 @@ public class Character {
     private void determineFeatureClass() {
         // Determine the feature class
         int []  rowWidths  = new int[bitmap.getHeight()];
+
+        // Map all of the pixels
+        Map <Integer, List<Integer>> pixels = new HashMap<>();
+
+
+        mapPixels(rowWidths, pixels);
         boolean disconnect = this.isDisconnect(rowWidths);
         boolean intersect  = this.isIntersect(rowWidths);
+        boolean openTops   = this.hasOpenTop(rowWidths, pixels);
 
         // Assign feature class accordingly
         if (disconnect)
             this.featureClass = 3;
         else if (intersect)
             this.featureClass = 4;
+    }
 
-        ////////////////////////////////////////////////////////////////////////////////////////////
-        //                                                                                        //
-        //                                                                                        //
-        //                                                                                        //
-        //                        BLACK PIXELS BLACK PIXELS BLACK PIXELS                          //
-        //                    BlACK PIXELS --> WHITE PIXELS --> BLACK PIXELS                      //
-        //             BLACK PIXELS ---------> WHITE PIXELS ---------> BLACK PIXELS               //
-        //     BLACK PIXELS -----------------> WHITE PIXELS-----------------> BLACK PIXELS        //
-        //             BLACK PIXELS ---------> WHITE PIXELS ---------> BLACK PIXELS               //
-        //                    BlACK PIXELS --> WHITE PIXELS --> BLACK PIXELS                      //
-        //                        BLACK PIXELS BLACK PIXELS BLACK PIXELS                          //
-        //                                                                                        //
-        //                                                                                        //
-        ////////////////////////////////////////////////////////////////////////////////////////////
+    /**
+     * Get the information for the number of pixels
+     * in each row
+     * @param rowWidths The width (in black pixels) of each row of the character
+     * @param pixels A map of each row and the pixels contained in each row
+     */
+    private void mapPixels(int[] rowWidths, Map<Integer, List<Integer>> pixels) {
+        for (int y = 0; y < bitmap.getHeight(); ++y) {
+            int numBlackPixelsInRow = 0;
+            List<Integer> xCoordinates = new ArrayList<>();
 
+            // Iterate across the row from left to right
+            for (int x = 0; x < bitmap.getWidth(); ++x) {
+                boolean pixelIsBlack = bitmap.getPixel(x, y) < Color.rgb(10, 10, 10);
+                if (pixelIsBlack) {
+                    numBlackPixelsInRow++;
+                    xCoordinates.add(1);
+                }
+                else {
+                    xCoordinates.add(0);
+                }
+            }
+            // Store how wide each row is in an array
+            rowWidths[y] = numBlackPixelsInRow;
+            pixels.put(y, xCoordinates);
+        }
     }
 
     /**
@@ -160,24 +179,9 @@ public class Character {
      * @return True if the character is a disconnect character
      */
     private boolean isDisconnect(int [] rowWidths) {
-        for (int y = 0; y < bitmap.getHeight(); ++y) {
-            int numBlackPixelsInRow = 0;
-
-            // Iterate across the row from left to right
-            for (int x = 0; x < bitmap.getWidth(); ++x) {
-                boolean pixelIsBlack = bitmap.getPixel(x, y) < Color.rgb(10, 10, 10);
-                if (pixelIsBlack) {
-                    numBlackPixelsInRow++;
-                }
-            }
-
-            // Store how wide each row is in an array
-            rowWidths[y] = numBlackPixelsInRow;
-
-            // If there is a row without any black pixels, it is a disconnect character
-            if (numBlackPixelsInRow == 0)
+        for (int i = 0; i < rowWidths.length; ++i)
+            if (rowWidths[i] == 0)
                 return true;
-        }
         return false;
     }
 
@@ -227,6 +231,40 @@ public class Character {
         }
         // Character should suddenly widen in no more than 2 areas of the bitmap
         return possibleIntersectChar && numSuddenChanges < 3;
+    }
+
+    /**
+     * Is the top of the character "open" ? The characters that should meet
+     * this criteria are:
+     *      1. u
+     *      2. v
+     *      3. w
+     *      4. y
+     *
+     * @param rowWidths The width (in black pixels) of each row of the character
+     * @return True if the character has an open top
+     */
+    private boolean hasOpenTop(int [] rowWidths, Map<Integer, List<Integer>> pixels) {
+        for (int i = 0; i < rowWidths.length; ++i) {
+            // Print out ASCII art for the intersect characters
+            String row = "";
+            for (int j = 0; j < pixels.get(i).size(); ++j) {
+                row += pixels.get(i).get(j);
+            }
+
+            String rowMarker;
+
+            if (i < 10)
+                rowMarker = "row  " + i + ": ";
+            else
+                rowMarker = "row " + i + ": ";
+
+            Log.i(LOG_TAG, rowMarker + row);
+        }
+        Log.i(LOG_TAG, "=========================================================================");
+        Log.i(LOG_TAG, "=========================================================================");
+
+        return false;
     }
 
     /**
