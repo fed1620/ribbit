@@ -8,7 +8,9 @@ import android.util.Log;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class CharacterBase {
     // Singleton (so that we only have to instantiate
@@ -83,7 +85,9 @@ public class CharacterBase {
         InputStream inputStream = null;
 
         int numFeatureType = 0;
-        int featureType    = -1;
+        int featureType    = 5;
+        Map<java.lang.Character, Integer> featureTypes = new HashMap<>();
+
         // Load each file referenced in the list of asset paths
         for (int i = 0; i < assetPaths.size(); ++i) {
             // Get the name of the current file
@@ -107,11 +111,20 @@ public class CharacterBase {
             addNewCharacter(character);
 
             if (character.getFeatureClass() == featureType) {
-                Log.i("CharacterBase", "featureType " + featureType + ": " + character.getName());
-                numFeatureType++;
+                if (featureTypes.containsKey(characterName))
+                    numFeatureType++;
+                else
+                    numFeatureType = 1;
+
+                featureTypes.put(characterName, numFeatureType);
             }
         }
-        Log.i("CharacterBase", numFeatureType + " featureType " + featureType + " characters");
+
+        Log.i("CharacterBase", " featureType " + featureType + " characters:");
+
+        for (char characterName : featureTypes.keySet()) {
+            Log.i("CharacterBase", characterName + ": " + featureTypes.get(characterName));
+        }
     }
 
     /**

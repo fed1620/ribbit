@@ -12,6 +12,7 @@ import java.util.Map;
 
 public class Character {
     private static final String LOG_TAG = "Character";
+    private static final boolean LOGGING_ENABLED = false;
 
     private char    name;
     private int     ascii;
@@ -83,7 +84,7 @@ public class Character {
      *      f, t
      *
      *  5: open top
-     *      u, v, w, y
+     *      u, v, w, y, [k, x]
      *
      *  6: open bottom
      *      n, h, m
@@ -116,9 +117,9 @@ public class Character {
         // Assign feature class accordingly
         if (disconnect)
             this.featureClass = 3;
-        if (intersect)
+        else if (intersect)
             this.featureClass = 4;
-        if (openTop)
+        else if (openTop)
             this.featureClass = 5;
     }
 
@@ -135,7 +136,7 @@ public class Character {
 
             // Iterate across the row from left to right
             for (int x = 0; x < bitmap.getWidth(); ++x) {
-                boolean pixelIsBlack = bitmap.getPixel(x, y) < Color.rgb(10, 10, 10);
+                boolean pixelIsBlack = bitmap.getPixel(x, y) < Color.rgb(25, 25, 25);
                 if (pixelIsBlack) {
                     numBlackPixelsInRow++;
                     xCoordinates.add(1);
@@ -274,9 +275,8 @@ public class Character {
     private boolean hasOpenTop(Map<Integer, List<Integer>> pixels) {
         List<Integer> xCoordinates = new ArrayList<>();
         List<Integer> yCoordinates = new ArrayList<>();
-        int topLeftBlackPixelX = 0;
-        int topLeftBlackPixelY = 0;
-
+        int topLeftBlackPixelX  = 0;
+        int topLeftBlackPixelY  = 0;
         int topRightBlackPixelX = 0;
         int topRightBlackPixelY = 0;
 
@@ -286,35 +286,31 @@ public class Character {
 
             // Each iteration is a pixel in the current row
             for (int x = 0; x < pixels.get(y).size(); ++x) {
-                if (x >= pixels.get(y).size()/2)
-                    // Top-right black pixel has not been set..
-                    if (topRightBlackPixelX == 0 && topRightBlackPixelY == 0) {
-                        if (pixels.get(y).get(x) == 1){
 
-                            // Find the top-right black pixel
-                            if ((x == pixels.get(y).size() - 1)) {
-                                topRightBlackPixelX = x;
-                                topRightBlackPixelY = y;
-                                pixels.get(y).set(x, 9);
-                            }
-                            else if (pixels.get(y).get(x + 1) == 0) {
-                                topRightBlackPixelX = x;
-                                topRightBlackPixelY = y;
-                                pixels.get(y).set(x, 9);
-                            }
+                // If we are more than halfway across the bitmap...
+                if (x >= pixels.get(y).size()/2 && topRightBlackPixelX == 0 && topRightBlackPixelY == 0) {
+
+                    // If the top-right black pixel has not been set..
+                    if (pixels.get(y).get(x) == 1) {
+                        // Find the top-right black pixel
+                        if ((x == pixels.get(y).size() - 1)) {
+                            topRightBlackPixelX = x;
+                            topRightBlackPixelY = y;
+                        }
+                        else if (pixels.get(y).get(x + 1) == 0) {
+                            topRightBlackPixelX = x;
+                            topRightBlackPixelY = y;
                         }
                     }
-                    else
-                        break;
-
-
+                    continue;
+                }
+                else if (x >= pixels.get(y).size() / 2)
+                    break;
 
                 // Find the top-left black pixel
-                if ((topLeftBlackPixelX == 0 && topLeftBlackPixelY == 0) &&
-                        pixels.get(y).get(x) == 1) {
+                if ((topLeftBlackPixelX == 0 && topLeftBlackPixelY == 0) && pixels.get(y).get(x) == 1) {
                     topLeftBlackPixelX = x;
                     topLeftBlackPixelY = y;
-                    pixels.get(y).set(x, 3);
                 }
 
                 // Record our starting point
@@ -322,12 +318,17 @@ public class Character {
                     pixels.get(y).get(x)     == 1 &&
                     pixels.get(y).get(x + 1) == 0 &&
                     pixels.get(y).get(x + 2) == 0) {
-                    pixels.get(y).set(x, 6);
                     startingPointReached = true;
                 }
 
                 if (!startingPointReached)
                     continue;
+
+                // Ensure the top-left-most and top-right-most pixels of the character are not
+                // wide enough apart, return false
+                float margin = pixels.get(y).size() / 4.25f;
+                if (topLeftBlackPixelX >= margin || topRightBlackPixelX <= pixels.get(y).size() - margin)
+                    return false;
 
                 // As long as the current pixel is white, move down
                 while (y < pixels.size() - 1 && x < pixels.get(y).size() - 1 && pixels.get(y).get(x) == 0) {
@@ -335,7 +336,6 @@ public class Character {
 
                     // If we run into a black pixel, move to the right
                     if (pixels.get(y).get(x) == 1) {
-                        pixels.get(y).set(x, 2);
                         xCoordinates.add(x);
                         yCoordinates.add(y);
                         x++;
@@ -343,23 +343,25 @@ public class Character {
                 }
             }
         }
+
         // Find where our marker left off
         if (!xCoordinates.isEmpty() && !yCoordinates.isEmpty()) {
             int xPosition = xCoordinates.get(xCoordinates.size() - 1);
             int yPosition = yCoordinates.get(yCoordinates.size() - 1);
 
+            if (xPosition < topLeftBlackPixelX || xPosition > topRightBlackPixelX)
+                return false;
+
             // Attempt to find a clean route back up to the top of the bitmap
-            for (int i = yPosition; i >= 0; i--) {
+            for (int i = yPosition - 1; i >= 0; i--)
                 if (pixels.get(i).get(xPosition) == 1)
                     return false;
-                pixels.get(i).set(xPosition, 4);
-            }
         }
         else
             return false;
 
-        debug(pixels);
-
+        if (LOGGING_ENABLED)
+            debug(pixels);
 
         return true;
     }
