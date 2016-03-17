@@ -59,7 +59,8 @@ public class MainActivity extends ActionBarActivity {
     private TextView timeIdentify;
     private TextView timeTotal;
 
-    // Character base
+    // Load Singleton Instances
+    private Dictionary dictionary;
     private CharacterBase characterBase;
     private boolean loadingCharBase = false;
     private String    imagePath = "";
@@ -73,10 +74,6 @@ public class MainActivity extends ActionBarActivity {
      * Because loading the CharacterBase may take a while, do it on an AsyncTask
      */
     class CharacterBaseLoader extends AsyncTask<String, Void, String> {
-
-        @Override
-        protected void onPreExecute() {
-        }
 
         @Override
         protected String doInBackground(String... params) {
@@ -106,17 +103,40 @@ public class MainActivity extends ActionBarActivity {
         @Override
         protected void onPostExecute(String result) {
             // Tell the activity that we have finished
+            Log.i(LOG_TAG, "Finished loading CharacterBase");
             Log.i(LOG_TAG, result);
             loadingCharBase = false;
         }
     }
 
     /**********************************************************************************************
+     *                       ASYNC TASK: DictionaryLoader
+     **********************************************************************************************/
+    /**
+     * Load the dictionary in the background
+     */
+    class DictionaryLoader extends AsyncTask<String, Void, String> {
+
+        @Override
+        protected String doInBackground(String... params) {
+            dictionary = Dictionary.getInstance(MainActivity.this);
+            return "Finished loading Dictionary";
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            Log.i(LOG_TAG, s);
+            Log.e(LOG_TAG, "YOUR RANDOM WORD IS: " + dictionary.getRandomWord());
+        }
+    }
+
+
+    /**********************************************************************************************
      *                       ASYNC TASK: Processor
      **********************************************************************************************/
 
     /**
-     * Because loading the CharacterBase may take a while, do it on an AsyncTask
+     * Process the word in the background
      */
     class Processor extends AsyncTask<String, Void, String> {
         // Get references to the loading elements
@@ -173,6 +193,9 @@ public class MainActivity extends ActionBarActivity {
             confirm();
         else
             getViewReferences();
+
+        // Load the dictionary as an async task
+        new DictionaryLoader().execute();
 
         // Load the character base as an async task
         if (!loadingCharBase)
@@ -364,7 +387,7 @@ public class MainActivity extends ActionBarActivity {
 
         // Identify
         timeStart = System.nanoTime();
-        final Word word = Identifier.identify(new Word(characters), this);
+        final String word = Identifier.identify(new Word(characters), this);
         timeEnd = System.nanoTime();
         final float secondsId = (timeEnd - timeStart) / 1000000000;
 
@@ -389,7 +412,7 @@ public class MainActivity extends ActionBarActivity {
             timeTotal.setText(String.format("%.2f"    , secondsTotal)     + "s");
 
             // Display the word
-            textBox.setText(word.getString());
+            textBox.setText(word);
             textBox.setVisibility(View.VISIBLE);
             textBox.setSelection(textBox.getText().length());
             }

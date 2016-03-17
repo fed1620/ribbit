@@ -5,6 +5,10 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.util.Log;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Identifier {
@@ -241,7 +245,7 @@ public class Identifier {
      * @param unknownWord The Word to be identified
      * @return A Word consisting of identified characters
      */
-    public static Word identify(Word unknownWord, Context context) {
+    public static String identify(Word unknownWord, Context context) {
         // Instantiate what will be our word
         Word word = new Word();
 
@@ -250,6 +254,6 @@ public class Identifier {
             // Identify each character and add it to our word
             word.addCharacter(identify(unknownCharacter,context));
         }
-        return word;
+        return Dictionary.getInstance(context).getClosestMatch(word.getString());
     }
 }
