@@ -36,6 +36,7 @@ public class CharacterBase {
 
     // Folder that contains all character samples
     private final static String ASSET_FOLDER = "characters/";
+    private final static boolean LOGGING_ENABLED = false;
     private final static int    A_ASCII   = 97;
     private final static int    Z_ASCII   = 122;
     private final static int    NUM_FILES = 20;
@@ -120,10 +121,12 @@ public class CharacterBase {
             }
         }
 
-        Log.i("CharacterBase", " featureType " + featureType + " characters:");
+        if (LOGGING_ENABLED) {
+            Log.i("CharacterBase", " featureType " + featureType + " characters:");
 
-        for (char characterName : featureTypes.keySet()) {
-            Log.i("CharacterBase", characterName + ": " + featureTypes.get(characterName));
+            for (char characterName : featureTypes.keySet()) {
+                Log.i("CharacterBase", characterName + ": " + featureTypes.get(characterName));
+            }
         }
     }
 

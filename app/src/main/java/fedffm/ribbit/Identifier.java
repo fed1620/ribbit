@@ -82,7 +82,7 @@ public class Identifier {
             }
 
         // 1.0 == The character pixels of each character are exactly aligned
-        return pixelsMatching / pixelsSample;
+        return pixelsMatching / pixelsUnknown;
     }
 
     /**
@@ -214,12 +214,12 @@ public class Identifier {
         }
 
         // Which was the most commonly occuring measurement?
-        int index;
+        int index = iGreatest;
 
-        if (iGreatest == iGreatestAverage || iGreatest == iGreatestCombined)
-            index = iGreatest;
-        else
-            index = iGreatestCombined;
+//        if (iGreatest == iGreatestAverage || iGreatest == iGreatestCombined)
+//            index = iGreatest;
+//        else
+//            index = iGreatestCombined;
 
 
         // Set the character name and ascii code
