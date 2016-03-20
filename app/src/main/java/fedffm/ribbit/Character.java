@@ -31,6 +31,8 @@ public class Character {
     public Character(Bitmap bitmap) {
         this.name         = '?';
         this.bitmap       = bitmap;
+        this.featureClass = -1;
+        this.ratioClass   = -1;
         this.determineRatioClass();
         this.determineFeatureClass();
     }

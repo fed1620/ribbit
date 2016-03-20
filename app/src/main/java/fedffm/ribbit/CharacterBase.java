@@ -36,7 +36,8 @@ public class CharacterBase {
 
     // Folder that contains all character samples
     private final static String ASSET_FOLDER = "characters/";
-    private final static boolean LOGGING_ENABLED = false;
+    private final static String LOG_TAG = "CharacterBase";
+    private final static boolean LOGGING_ENABLED = true;
     private final static int    A_ASCII   = 97;
     private final static int    Z_ASCII   = 122;
     private final static int    NUM_FILES = 20;
@@ -85,12 +86,15 @@ public class CharacterBase {
         // Create an input stream
         InputStream inputStream = null;
 
-        int numFeatureType = 0;
-        int featureType    = 5;
+        int featureType = 5;
         Map<java.lang.Character, Integer> featureTypes = new HashMap<>();
+        int count = 0;
+
+
 
         // Load each file referenced in the list of asset paths
         for (int i = 0; i < assetPaths.size(); ++i) {
+
             // Get the name of the current file
             String fileName = assetPaths.get(i);
 
@@ -113,20 +117,19 @@ public class CharacterBase {
 
             if (character.getFeatureClass() == featureType) {
                 if (featureTypes.containsKey(characterName))
-                    numFeatureType++;
+                    count++;
                 else
-                    numFeatureType = 1;
+                    count = 1;
 
-                featureTypes.put(characterName, numFeatureType);
+                featureTypes.put(characterName, count);
             }
         }
 
-        if (LOGGING_ENABLED) {
-            Log.i("CharacterBase", " featureType " + featureType + " characters:");
 
-            for (char characterName : featureTypes.keySet()) {
-                Log.i("CharacterBase", characterName + ": " + featureTypes.get(characterName));
-            }
+        if (LOGGING_ENABLED)
+
+        for (char character : featureTypes.keySet()) {
+            Log.i(LOG_TAG, character + ": " + featureTypes.get(character));
         }
     }
 
