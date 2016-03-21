@@ -35,12 +35,13 @@ public class CharacterBase {
     }
 
     // Folder that contains all character samples
-    private final static String ASSET_FOLDER = "characters/";
-    private final static String LOG_TAG = "CharacterBase";
+    private final static String  ASSET_FOLDER = "characters/";
+    private final static String  LOG_TAG      = "CharacterBase";
     private final static boolean LOGGING_ENABLED = true;
-    private final static int    A_ASCII   = 97;
-    private final static int    Z_ASCII   = 122;
-    private final static int    NUM_FILES = 20;
+    private final static int     FEATURE_TYPE = 5;
+    private final static int     A_ASCII      = 97;
+    private final static int     Z_ASCII      = 122;
+    private final static int     NUM_FILES    = 20;
 
     // The list of known characters
     private List<Character> characters;
@@ -86,11 +87,8 @@ public class CharacterBase {
         // Create an input stream
         InputStream inputStream = null;
 
-        int featureType = 5;
         Map<java.lang.Character, Integer> featureTypes = new HashMap<>();
         int count = 0;
-
-
 
         // Load each file referenced in the list of asset paths
         for (int i = 0; i < assetPaths.size(); ++i) {
@@ -115,7 +113,7 @@ public class CharacterBase {
             character.setAscii((int) characterName);
             addNewCharacter(character);
 
-            if (character.getFeatureClass() == featureType) {
+            if (character.getFeatureClass() == FEATURE_TYPE) {
                 if (featureTypes.containsKey(characterName))
                     count++;
                 else
@@ -126,10 +124,11 @@ public class CharacterBase {
         }
 
 
-        if (LOGGING_ENABLED)
-
-        for (char character : featureTypes.keySet()) {
-            Log.i(LOG_TAG, character + ": " + featureTypes.get(character));
+        if (LOGGING_ENABLED) {
+            Log.i(LOG_TAG, "FEATURE_TYPE " + FEATURE_TYPE + " characters: ");
+            for (char character : featureTypes.keySet()) {
+                Log.i(LOG_TAG, character + ": " + featureTypes.get(character));
+            }
         }
     }
 
