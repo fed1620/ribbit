@@ -12,8 +12,8 @@ import java.util.Map;
 
 public class Character {
     private static final String  LOG_TAG         = "Character";
-    private static final boolean LOGGING_ENABLED = false;
-    private static final boolean DEBUG           = false;
+    private static final boolean LOGGING_ENABLED = true;
+    private static final boolean DEBUG           = true;
 
     private char    name;
     private int     ascii;
@@ -116,6 +116,7 @@ public class Character {
         boolean disconnect = this.isDisconnect(rowWidths);
         boolean intersect  = this.isIntersect(rowWidths);
         boolean openTop    = this.hasOpenTop(pixels);
+        boolean openBottom = this.hasOpenBottom(pixels);
 
         // Assign feature class accordingly
         if (disconnect)
@@ -124,6 +125,8 @@ public class Character {
             this.featureClass = 4;
         else if (openTop)
             this.featureClass = 5;
+        else if (openBottom)
+            this.featureClass = 6;
     }
 
     /**
@@ -299,21 +302,16 @@ public class Character {
                 if (!topLeftPixelSet && pixels.get(y).get(x) == 1 && x <= pixels.get(y).size()/3) {
                     topLeftBlackPixelX = x;
                     topLeftBlackPixelY = y;
-
-                    if (DEBUG)
-                        pixels.get(y).set(x, 3);
                 }
 
                 // Record our starting point
                 if (x <= pixels.get(y).size()/2 && topLeftPixelSet && !startingPointReached &&
                         pixels.get(y).get(x) == 1 && pixels.get(y).get(x + 1) == 0 && pixels.get(y).get(x + 2) == 0) {
                     startingPointReached = true;
-                    if (DEBUG)
-                        pixels.get(y).set(x, 6);
                 }
 
                  ///////////////////////////////////////////////////////////////////////////////////
-                // Find the top-right black pixel
+                //                                                    Find the top-right black pixel
                 //
                 ////////////////////////////////////////////////////////////////////////////////////
                 if (!topRightPixelSet && x >= pixels.get(y).size()/2) {
@@ -324,18 +322,12 @@ public class Character {
                         if ((x == pixels.get(y).size() - 1)) {
                             topRightBlackPixelX = x;
                             topRightBlackPixelY = y;
-
-                            if (DEBUG)
-                                pixels.get(y).set(x, 9);
                         }
                         // If it is the last black pixel in the row, it also
                         // qualifies as the top-right pixel
                         else if (pixels.get(y).get(x + 1) == 0) {
                             topRightBlackPixelX = x;
                             topRightBlackPixelY = y;
-
-                            if (DEBUG)
-                                pixels.get(y).set(x, 9);
                         }
                     }
                     continue;
@@ -376,6 +368,123 @@ public class Character {
 
             // Attempt to find a clean route back up to the top of the bitmap
             for (int i = yPosition - 1; i >= 0; i--)
+                if (pixels.get(i).get(xPosition) == 1)
+                    return false;
+        }
+        else
+            return false;
+
+        return true;
+    }
+
+    /**
+     * Is the bottom of the character "open" ? The characters that should meet
+     * this criteria are:
+     *      1. n
+     *      2. h
+     *      3. m
+     *
+     * @param pixels Each entry represents a row of black and white pixels
+     * @return True if the character has an open top
+     */
+    private boolean hasOpenBottom(Map<Integer, List<Integer>> pixels) {
+        List<Integer> xCoordinates = new ArrayList<>();
+        List<Integer> yCoordinates = new ArrayList<>();
+        int bottomLeftBlackPixelX  = 0;
+        int bottomLeftBlackPixelY  = 0;
+        int bottomRightBlackPixelX = 0;
+        int bottomRightBlackPixelY = 0;
+        boolean startingPointReached = false;
+
+        // Each iteration is a row in the bitmap
+        for (int y = pixels.size() - 1; y >= 0; --y) {
+
+            // Each iteration is a pixel in the current row
+            for (int x = 0; x < pixels.get(y).size(); ++x) {
+                boolean bottomLeftPixelSet  = !(bottomLeftBlackPixelX  == 0 && bottomLeftBlackPixelY  == 0);
+                boolean bottomRightPixelSet = !(bottomRightBlackPixelX == 0 && bottomRightBlackPixelY == 0);
+
+                ////////////////////////////////////////////////////////////////////////////////////
+                //
+                // Find the bottom-left black pixel
+                ////////////////////////////////////////////////////////////////////////////////////
+                if (!bottomLeftPixelSet && pixels.get(y).get(x) == 1 && x <= pixels.get(y).size()/3) {
+                    bottomLeftBlackPixelX = x;
+                    bottomLeftBlackPixelY = y;
+                    if (DEBUG)
+                        pixels.get(y).set(x, 3);
+                }
+
+                // Record our starting point
+                if (x <= pixels.get(y).size()/2 && bottomLeftPixelSet && !startingPointReached &&
+                        pixels.get(y).get(x) == 1 && pixels.get(y).get(x + 1) == 0 && pixels.get(y).get(x + 2) == 0) {
+                    startingPointReached = true;
+                    if (DEBUG)
+                        pixels.get(y).set(x, 6);
+                }
+
+                ////////////////////////////////////////////////////////////////////////////////////
+                //
+                //                                                 Find the bottom-right black pixel
+                ////////////////////////////////////////////////////////////////////////////////////
+                if (!bottomRightPixelSet && x >= pixels.get(y).size()/2) {
+                    // Only evaluate black pixels
+                    if (pixels.get(y).get(x) == 1) {
+                        // If the black pixel is at the very edge of the bitmap,
+                        // it qualifies as the top-right pixel
+                        if ((x == pixels.get(y).size() - 1)) {
+                            bottomRightBlackPixelX = x;
+                            bottomRightBlackPixelY = y;
+                            if (DEBUG)
+                                pixels.get(y).set(x, 9);
+                        }
+                        // If it is the last black pixel in the row, it also
+                        // qualifies as the top-right pixel
+                        else if (pixels.get(y).get(x + 1) == 0) {
+                            bottomRightBlackPixelX = x;
+                            bottomRightBlackPixelY = y;
+                            if (DEBUG)
+                                pixels.get(y).set(x, 9);
+                        }
+                    }
+                    continue;
+                }
+
+                // We can't begin further evaluation until we establish our starting
+                // and stopping points
+                if (!bottomLeftPixelSet || !startingPointReached || !bottomRightPixelSet)
+                    continue;
+
+                // Ensure the top-left-most and top-right-most pixels of the character are not
+                // wide enough apart, return false
+                float margin = pixels.get(y).size() / 4.25f;
+                if (bottomLeftBlackPixelX >= margin || bottomRightBlackPixelX <= pixels.get(y).size() - margin)
+                    return false;
+
+                // As long as the current pixel is white, move up
+                while (y > 0 && x < pixels.get(y).size() - 1 && pixels.get(y).get(x) == 0) {
+                    y--;
+
+                    // If we run into a black pixel, move to the right
+                    if (pixels.get(y).get(x) == 1) {
+                        xCoordinates.add(x);
+                        yCoordinates.add(y);
+                        x++;
+                    }
+                }
+            }
+        }
+
+        // Find where our marker left off
+        if (!xCoordinates.isEmpty() && !yCoordinates.isEmpty()) {
+            int xPosition = xCoordinates.get(xCoordinates.size() - 1);
+            int yPosition = yCoordinates.get(yCoordinates.size() - 1);
+
+            if (xPosition < bottomLeftBlackPixelX || xPosition > bottomRightBlackPixelX)
+                return false;
+
+            // Attempt to find a clean route back down to the bottom of the bitmap
+            for (int i = yPosition + 1; i < pixels.size(); ++i)
                 if (pixels.get(i).get(xPosition) == 1)
                     return false;
         }
