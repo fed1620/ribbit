@@ -38,7 +38,7 @@ public class CharacterBase {
     private final static String  ASSET_FOLDER = "characters/";
     private final static String  LOG_TAG      = "CharacterBase";
     private final static boolean LOGGING_ENABLED = true;
-    private final static int     FEATURE_TYPE = 6;
+    private final static int     FEATURE_TYPE = 7;
     private final static int     A_ASCII      = 97;
     private final static int     Z_ASCII      = 122;
     private final static int     NUM_FILES    = 20;
@@ -125,9 +125,9 @@ public class CharacterBase {
 
 
         if (LOGGING_ENABLED) {
-            Log.i(LOG_TAG, "FEATURE_TYPE " + FEATURE_TYPE + " characters: ");
+            Log.i(LOG_TAG, "Feature type " + FEATURE_TYPE + " characters: ");
             for (char character : featureTypes.keySet()) {
-                Log.i(LOG_TAG, character + ": " + featureTypes.get(character));
+                Log.i(LOG_TAG, character + ": " + featureTypes.get(character) + "/20");
             }
         }
     }

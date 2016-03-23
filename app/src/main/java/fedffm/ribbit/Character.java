@@ -115,6 +115,7 @@ public class Character {
         // Determine which feature class the character falls under
         boolean disconnect = this.isDisconnect(rowWidths);
         boolean intersect  = this.isIntersect(rowWidths);
+        boolean openRight  = this.hasOpenRightSide(pixels);
         boolean openTop    = this.hasOpenTop(pixels);
         boolean openBottom = this.hasOpenBottom(pixels);
 
@@ -123,6 +124,8 @@ public class Character {
             this.featureClass = 3;
         else if (intersect)
             this.featureClass = 4;
+        else if (openRight)
+            this.featureClass = 7;
         else if (openTop)
             this.featureClass = 5;
         else if (openBottom)
@@ -161,7 +164,7 @@ public class Character {
      * Output an ASCII map of the character's pixels
      * @param pixels Each entry represents a row of black and white pixels
      */
-    private void debug(Map<Integer, List<Integer>> pixels) {
+    private void display(Map<Integer, List<Integer>> pixels) {
         for (int i = 0; i < pixels.size(); ++i) {
             // Print out ASCII art for the intersect characters
             String row = "";
@@ -457,7 +460,7 @@ public class Character {
 
                 // Ensure the top-left-most and top-right-most pixels of the character are not
                 // wide enough apart, return false
-                float margin = pixels.get(y).size() / 4.25f;
+                float margin = pixels.get(y).size() / 3.0f;
                 if (bottomLeftBlackPixelX >= margin || bottomRightBlackPixelX <= pixels.get(y).size() - margin)
                     return false;
 
@@ -469,6 +472,8 @@ public class Character {
                     if (pixels.get(y).get(x) == 1) {
                         xCoordinates.add(x);
                         yCoordinates.add(y);
+                        if (DEBUG)
+                            pixels.get(y).set(x, 5);
                         x++;
                     }
                 }
@@ -483,18 +488,70 @@ public class Character {
             if (xPosition < bottomLeftBlackPixelX || xPosition > bottomRightBlackPixelX)
                 return false;
 
+            // In order to be considered an "open-bottom" character, the character
+            // must exhibit adequate depth
+            if (yPosition >= pixels.size() / 2)
+                return false;
+
             // Attempt to find a clean route back down to the bottom of the bitmap
-            for (int i = yPosition + 1; i < pixels.size(); ++i)
+            for (int i = yPosition + 1; i < pixels.size(); ++i) {
                 if (pixels.get(i).get(xPosition) == 1)
                     return false;
+                if (DEBUG)
+                    pixels.get(i).set(xPosition, 4);
+            }
         }
         else
             return false;
 
-        if (LOGGING_ENABLED)
-            debug(pixels);
-
         return true;
+    }
+
+    /**
+     * Is the right side of the character "open" ? The characters that should meet
+     * this criteria are:
+     *      1. c
+     *      2. r
+     *
+     * @param pixels Each entry represents a row of black and white pixels
+     * @return True if the character is "open" at the right side
+     */
+    private boolean hasOpenRightSide(Map<Integer, List<Integer>> pixels) {
+
+        // The index of the right-most edge of the bitmap
+        int lastColumnIndex = pixels.get(0).size() - 1;
+
+        // Until proven otherwise, assume that each section
+        // only has pixels at the left of the bitmap
+        boolean upperThirdIsLeftSkewed = true;
+        boolean middleIsLeftSkewed     = true;
+        boolean lowerThirdIsLeftSkewed = true;
+
+        // Starting at the right-most edge of the bitmap,
+        // iterate until we reach the left-most edge
+        for (int i = lastColumnIndex; i >= 0; --i) {
+
+            // Detect black pixels close to the right edge
+            // of the upper-third section of the bitmap
+            if (pixels.get(pixels.size() / 3).get(i) == 1)
+                if (i >= lastColumnIndex / 1.9f)
+                    upperThirdIsLeftSkewed = false;
+
+            // Detect black pixels close to the right edge
+            // of the middle section of the bitmap
+            if (pixels.get(pixels.size() / 2).get(i) == 1)
+                if (i >= lastColumnIndex / 1.9f)
+                    middleIsLeftSkewed = false;
+
+            // Detect black pixels close to the right edge
+            // of the lower-third section of the bitmap
+            if (pixels.get((int)(pixels.size() * (2.0f/3.0f))).get(i) == 1)
+                if (i >= lastColumnIndex / 1.9f)
+                    lowerThirdIsLeftSkewed = false;
+
+        }
+
+        return !(!upperThirdIsLeftSkewed || !middleIsLeftSkewed || !lowerThirdIsLeftSkewed);
     }
 
     /**
