@@ -118,6 +118,7 @@ public class Character {
         boolean openRight  = this.hasOpenRightSide(pixels);
         boolean openTop    = this.hasOpenTop(pixels);
         boolean openBottom = this.hasOpenBottom(pixels);
+        boolean enclosedSpace = this.hasEnclosedSpace(pixels);
 
         // Assign feature class accordingly
         if (disconnect)
@@ -130,6 +131,8 @@ public class Character {
             this.featureClass = 5;
         else if (openBottom)
             this.featureClass = 6;
+        else if (enclosedSpace)
+            this.featureClass = 1;
     }
 
     /**
@@ -202,9 +205,141 @@ public class Character {
      *
      * @return True if the character contains enclosed whitespace
      */
-    private boolean hasEnclosedSpace() {
+    private boolean hasEnclosedSpace(Map<Integer, List<Integer>> pixels) {
+        for (int y = 0; y < pixels.size(); ++y) {
+            for (int x = 0; x < pixels.get(0).size(); ++x) {
+                // So that we don't go out of bounds
+                if (y < 1 || x  >= pixels.get(0).size() - 2)
+                    break;
+
+                // White pixel with a black pixel above (three in a row)
+                if (pixels.get(y).get(x)     == 0 && pixels.get(y - 1).get(x)     == 1 &&
+                    pixels.get(y).get(x + 1) == 0 && pixels.get(y - 1).get(x + 1) == 1 &&
+                    pixels.get(y).get(x + 2) == 0 && pixels.get(y - 1).get(x + 2) == 1) {
+
+                    // Iterate to the right as far as we can
+                    while (x < pixels.get(0).size() - 1  &&
+                           y < pixels.size()        - 1  &&
+                           pixels.get(y).get(x)     == 0) {
+
+                        pixels.get(y).set(x, 3);
+                        if (pixels.get(y).get(x + 1) != 1)
+                            ++x;
+
+                        // If we run into a black pixel, move down
+                        if (y < pixels.size() - 1        &&
+                            x < pixels.get(0).size() - 1 &&
+                            pixels.get(y).get(x + 1) == 1 ) {
+
+                            pixels.get(y).set(x, 4);
+                            if (pixels.get(y + 1).get(x) != 1)
+                                ++y;
+                        }
+                    }
+
+                    // Iterate down as far as we can
+                    while (y < pixels.size() - 1 && pixels.get(y).get(x) == 0) {
+                        pixels.get(y).set(x,5);
+                        ++y;
+
+                        // If we run into a black pixel, move to the left
+                        if (x < pixels.get(0).size() - 1 && pixels.get(y).get(x) == 1) {
+                            --x;
+                            pixels.get(y).set(x,5);
+                        }
+                    }
+                }
+            }
+        }
+        display(pixels);
+
         return false;
     }
+//    private boolean hasEnclosedSpace(Map<Integer, List<Integer>> pixels) {
+//        int [] columnPositions = new int[3];
+//        int [] rowPositions    = new int[3];
+//
+//        int thirdOfColumn   = pixels.size() / 3;
+//        int middleOfColumn  = pixels.size() / 2;
+//        int twoThirdsColumn = (int)(pixels.size() * (2.0f/3.0f));
+//        int thirdOfRow      = pixels.get(0).size() / 3;
+//        int middleOfRow     = pixels.get(0).size() / 2;
+//        int twoThirdsRow    = (int)(pixels.get(0).size() * (2.0f/3.0f));
+//
+//        columnPositions[0] = thirdOfColumn;
+//        columnPositions[1] = middleOfColumn;
+//        columnPositions[2] = twoThirdsColumn;
+//        rowPositions[0]    = thirdOfRow;
+//        rowPositions[1]    = middleOfRow;
+//        rowPositions[2]    = twoThirdsRow;
+//
+//
+//        int numPossibilities = 0;
+//
+//        for (int i = 0; i < columnPositions.length; ++i) {
+//            for (int j = 0; j < rowPositions.length; ++j) {
+//                // Only evaluate characters where we start in open space
+//                if (pixels.get(columnPositions[i]).get(rowPositions[j]) != 0)
+//                    continue;
+//
+//                boolean pathToTop    = true;
+//                boolean pathToBottom = true;
+//                boolean pathToRight  = true;
+//                boolean pathToLeft   = true;
+//
+//                // Can we make it to the top of the bitmap?
+//                for (int k = columnPositions[i]; k >= 0; --k) {
+//                    if (pixels.get(k).get(rowPositions[j]) == 1) {
+//                        pathToTop = false;
+//                        break;
+//                    }
+//                    if (DEBUG)
+//                        pixels.get(k).set(rowPositions[j], 2);
+//                }
+//
+//                // Can we make it to the bottom of the bitmap?
+//                for (int k = columnPositions[i]; k < pixels.size(); ++k) {
+//                    if (pixels.get(k).get(rowPositions[j]) == 1) {
+//                        pathToBottom = false;
+//                        break;
+//                    }
+//                    if (DEBUG)
+//                        pixels.get(k).set(rowPositions[j], 3);
+//                }
+//
+//                // Can we make it to the right side of the bitmap?
+//                for (int k = rowPositions[i]; k < pixels.get(0).size(); ++k) {
+//                    if (pixels.get(columnPositions[j]).get(k) == 1) {
+//                        pathToRight = false;
+//                        break;
+//                    }
+//                    if (DEBUG)
+//                        pixels.get(columnPositions[j]).set(k, 4);
+//                }
+//
+//                // Can we make it to the left side of the bitmap?
+//                for (int k = rowPositions[i]; k >= 0; --k) {
+//                    if (pixels.get(columnPositions[j]).get(k) == 1) {
+//                        pathToLeft = false;
+//                        break;
+//                    }
+//                    if (DEBUG)
+//                        pixels.get(columnPositions[j]).set(k, 5);
+//                }
+//
+//                if (!pathToTop && !pathToBottom && !pathToRight && !pathToLeft)
+//                    numPossibilities++;
+//            }
+//        }
+//
+//        if (numPossibilities < 3)
+//            return false;
+//
+//        if (LOGGING_ENABLED)
+//            display(pixels);
+//
+//        return true;
+//    }
 
     /**
      * Is the character disconnected at any point? The characters that should
@@ -414,16 +549,12 @@ public class Character {
                 if (!bottomLeftPixelSet && pixels.get(y).get(x) == 1 && x <= pixels.get(y).size()/3) {
                     bottomLeftBlackPixelX = x;
                     bottomLeftBlackPixelY = y;
-                    if (DEBUG)
-                        pixels.get(y).set(x, 3);
                 }
 
                 // Record our starting point
                 if (x <= pixels.get(y).size()/2 && bottomLeftPixelSet && !startingPointReached &&
                         pixels.get(y).get(x) == 1 && pixels.get(y).get(x + 1) == 0 && pixels.get(y).get(x + 2) == 0) {
                     startingPointReached = true;
-                    if (DEBUG)
-                        pixels.get(y).set(x, 6);
                 }
 
                 ////////////////////////////////////////////////////////////////////////////////////
@@ -438,16 +569,12 @@ public class Character {
                         if ((x == pixels.get(y).size() - 1)) {
                             bottomRightBlackPixelX = x;
                             bottomRightBlackPixelY = y;
-                            if (DEBUG)
-                                pixels.get(y).set(x, 9);
                         }
                         // If it is the last black pixel in the row, it also
                         // qualifies as the top-right pixel
                         else if (pixels.get(y).get(x + 1) == 0) {
                             bottomRightBlackPixelX = x;
                             bottomRightBlackPixelY = y;
-                            if (DEBUG)
-                                pixels.get(y).set(x, 9);
                         }
                     }
                     continue;
@@ -472,8 +599,6 @@ public class Character {
                     if (pixels.get(y).get(x) == 1) {
                         xCoordinates.add(x);
                         yCoordinates.add(y);
-                        if (DEBUG)
-                            pixels.get(y).set(x, 5);
                         x++;
                     }
                 }
@@ -497,8 +622,6 @@ public class Character {
             for (int i = yPosition + 1; i < pixels.size(); ++i) {
                 if (pixels.get(i).get(xPosition) == 1)
                     return false;
-                if (DEBUG)
-                    pixels.get(i).set(xPosition, 4);
             }
         }
         else
