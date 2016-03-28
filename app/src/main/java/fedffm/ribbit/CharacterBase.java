@@ -38,7 +38,7 @@ public class CharacterBase {
     private final static String  ASSET_FOLDER = "characters/";
     private final static String  LOG_TAG      = "CharacterBase";
     private final static boolean LOGGING_ENABLED = true;
-    private final static int     FEATURE_TYPE = 1;
+    private final static int     FEATURE_TYPE = 2;
     private final static int     A_ASCII      = 97;
     private final static int     Z_ASCII      = 122;
     private final static int     NUM_FILES    = 20;

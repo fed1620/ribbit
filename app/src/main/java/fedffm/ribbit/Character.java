@@ -128,7 +128,7 @@ public class Character {
         boolean openRight     = this.hasOpenRightSide(pixels);
         boolean openTop       = this.hasOpenTop(pixels);
         boolean openBottom    = this.hasOpenBottom(pixels);
-        boolean enclosedSpace = this.hasEnclosedSpace(pixels);
+        int     enclosedSpace = this.hasEnclosedSpace(pixels);
 
         // Assign feature class accordingly
         if (disconnect)
@@ -141,8 +141,13 @@ public class Character {
             this.featureClass = 5;
         else if (openBottom)
             this.featureClass = 6;
-        else if (enclosedSpace)
+        else if (enclosedSpace == 0)
+            this.featureClass = 0;
+        else if (enclosedSpace == 1)
             this.featureClass = 1;
+        else if (enclosedSpace == 2)
+            this.featureClass = 2;
+
     }
 
     /**
@@ -215,9 +220,9 @@ public class Character {
      *
      * @return True if the character contains enclosed whitespace
      */
-    private boolean hasEnclosedSpace(Map<Integer, List<Integer>> pixels) {
+    private int hasEnclosedSpace(Map<Integer, List<Integer>> pixels) {
         // Use this list of coordinates to keep track of our position in the bitmap
-        List<String> coordinates;
+        List<String> coordinates = new ArrayList<>();
 
         // The outer-most loop is to help us find our starting point
         for (int y = 0; y < pixels.size(); ++y) {
@@ -244,26 +249,22 @@ public class Character {
 
                         // Move down if need be
                         while (pixels.get(y).get(x) == 0 && pixels.get(y).get(x + 1) == 1 && y < pixels.size() - 1) {
-                            pixels.get(y).set(x, 2);
-//                            if (coordinates.contains(x + ":" +y)) {
-//                                return true;
-//                            }
+//                            pixels.get(y).set(x, 2);
                             coordinates.add(x + ":" + y);
                             y++;
+
                             if (outOfBounds(pixels, x, y))
-                                return false;
+                                return -1;
                         }
 
                         // Move to the right
-                        pixels.get(y).set(x, 3);
-//                        if (coordinates.contains(x + ":" +y))
-//                            return true;
-
+//                        pixels.get(y).set(x, 3);
                         coordinates.add(x + ":" + y);
                         x++;
                         if (outOfBounds(pixels, x, y))
-                            return false;
+                            return -1;
 
+                        // Prepare for the next loop
                         if (pixels.get(y).get(x) == 1) {
                             x--;
                             pixels.get(y).set(x, 0);
@@ -281,28 +282,27 @@ public class Character {
                     //  ':::::'
                     //    ':`
                     //
-                    while (x >= 0  && y < pixels.size() - 1  && pixels.get(y).get(x) == 0) {
+                    while (x > 0  && y < pixels.size() - 1  && pixels.get(y).get(x) == 0) {
 
                         // Move to the left if need be
                         while (pixels.get(y).get(x) == 0 && pixels.get(y + 1).get(x) == 1 && x > 0) {
-                            pixels.get(y).set(x, 4);
-
+//                            pixels.get(y).set(x, 4);
                             coordinates.add(x + ":" + y);
                             x--;
 
                             if (outOfBounds(pixels, x, y))
-                                return false;
+                                return -1;
                         }
 
                         // Move down
-                        pixels.get(y).set(x, 5);
-
+//                        pixels.get(y).set(x, 5);
                         coordinates.add(x + ":" + y);
                         y++;
 
                         if (outOfBounds(pixels, x, y))
-                            return false;
+                            return -1;
 
+                        // Prepare for the next loop
                         if (pixels.get(y).get(x) == 1) {
                             y--;
                             pixels.get(y).set(x, 0);
@@ -321,22 +321,23 @@ public class Character {
 
                         // Move up if need be
                         while (pixels.get(y).get(x) == 0 && pixels.get(y).get(x - 1) == 1 && y > 0) {
-                            pixels.get(y).set(x, 6);
-
+//                            pixels.get(y).set(x, 6);
                             coordinates.add(x + ":" + y);
                             y--;
+
                             if (outOfBounds(pixels, x, y))
-                                return false;
+                                return -1;
                         }
 
                         // Move to the left
-                        pixels.get(y).set(x, 7);
-
+//                        pixels.get(y).set(x, 7);
                         coordinates.add(x + ":" + y);
                         x--;
-                        if (outOfBounds(pixels, x, y))
-                            return false;
 
+                        if (outOfBounds(pixels, x, y))
+                            return -1;
+
+                        // Prepare for the next loop
                         if (pixels.get(y).get(x) == 1) {
                             x++;
                             pixels.get(y).set(x, 0);
@@ -359,41 +360,114 @@ public class Character {
                         // Move to the right if need be
                         while (pixels.get(y).get(x) == 0 && pixels.get(y - 1).get(x) == 1 && x < pixels.get(0).size() - 1) {
 
-                            pixels.get(y).set(x, 8);
+//                            pixels.get(y).set(x, 8);
                             if (coordinates.contains(x + ":" + y)) {
-                                Log.e(LOG_TAG, "Looped all the way around!");
-                                display(pixels);
-                                return true;
+                                if (isPointingUp(pixels))
+                                    return 1;
+                                else if (isPointingDown(pixels))
+                                    return 2;
+                                return 0;
                             }
-                            coordinates.add(x + ":" + y);
                             x++;
+                            coordinates.add(x + ":" + y);
+
+
                             if (outOfBounds(pixels, x, y))
-                                return false;
+                                return -1;
                         }
 
                         // Move up
-                        pixels.get(y).set(x, 9);
+//                        pixels.get(y).set(x, 9);
                         if (coordinates.contains(x + ":" + y)) {
-                            Log.e(LOG_TAG, "Looped all the way around!");
-                            display(pixels);
-                            return true;
+                            if (isPointingUp(pixels))
+                                return 1;
+                            else if (isPointingDown(pixels))
+                                return 2;
+                            return 0;
                         }
-                        coordinates.add(x + ":" + y);
                         y--;
-                        if (outOfBounds(pixels, x, y))
-                            return false;
+                        coordinates.add(x + ":" + y);
 
-                        if (pixels.get(y).get(x) == 1) {
-                            y++;
-                            pixels.get(y).set(x, 0);
-                            break;
-                        }
+
+                        if (outOfBounds(pixels, x, y))
+                            return -1;
+
+//                        if (pixels.get(y).get(x) == 1) {
+//                            y++;
+//                            pixels.get(y).set(x, 0);
+//                            break;
+//                        }
                     }
                 }
             }
         }
 
-        return false;
+        return -1;
+    }
+
+    /**
+     * Is the character pointing upward? The characters that should
+     * meet this criteria are:
+     *      1. b
+     *      2. d
+     * @param pixels A map of the pixels
+     * @return True if the character has a stem that points upward
+     */
+    private boolean isPointingUp(Map<Integer, List<Integer>> pixels) {
+        boolean leftSkewed = true;
+        boolean rightSkewed = true;
+
+        for (int y = 0; y < pixels.size(); ++y) {
+            for (int x = 0; x < pixels.get(y).size(); ++x) {
+                // First fifth rows
+                if (y <= pixels.get(y).size() / 5) {
+
+                    // Last two-third columns
+                    if (x >= pixels.get(y).size() / 3) {
+                        if (pixels.get(y).get(x) == 1)
+                            leftSkewed = false;
+                    }
+                    // First two-third columns
+                    else if (x <= (int)(pixels.get(y).size() * (2.0f/3.0f))) {
+                        if (pixels.get(y).get(x) == 1)
+                            rightSkewed = false;
+                    }
+                }
+            }
+        }
+        return ((leftSkewed && !rightSkewed) || (!leftSkewed && rightSkewed));
+    }
+
+    /**
+     * Is the character pointing downward? The characters that should
+     * meet this criteria are:
+     *      1. g
+     *      2. p
+     *      3. q
+     * @param pixels A map of the pixels
+     * @return True if the character has a stem that points downward
+     */
+    private boolean isPointingDown(Map<Integer, List<Integer>> pixels) {
+        boolean leftSkewed = true;
+        boolean rightSkewed = true;
+
+        for (int y = (int)(pixels.size() * (3.0f / 4.0f)); y < (int)(pixels.size() * (4.0f/5.0f)); ++y) {
+            for (int x = 0; x < pixels.get(y).size(); ++x) {
+                // Last two-third columns
+                if (x >= (int)(pixels.get(y).size() / 3.0f)) {
+                    if (pixels.get(y).get(x) == 1)
+                        leftSkewed = false;
+                }
+                // First two-third columns
+                else if (x <= (int)(pixels.get(y).size() * (2.0f / 3.0f))) {
+                    if (pixels.get(y).get(x) == 1)
+                        rightSkewed = false;
+                }
+            }
+        }
+
+//        display(pixels);
+        return ((leftSkewed && !rightSkewed) || (!leftSkewed && rightSkewed));
     }
 
     /**
