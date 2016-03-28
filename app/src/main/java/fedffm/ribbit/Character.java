@@ -69,6 +69,16 @@ public class Character {
     }
 
     /**
+     * Are we in bounds or out of bounds?
+     * @param pixels The map of pixels
+     * @param x The x coordinate
+     * @param y The y coordinate
+     */
+    private boolean outOfBounds(Map <Integer, List<Integer>> pixels, int x, int y) {
+        return (x >= pixels.get(0).size() - 1 || x <= 0 || y >= pixels.size() - 1 || y <= 0);
+    }
+
+    /**
      * What are certain attributes of the character?
      *
      *  0: enclosed space - round
@@ -106,18 +116,18 @@ public class Character {
      */
     private void determineFeatureClass() {
         // Use this to record how many black pixels are in each row
-        int []  rowWidths  = new int[bitmap.getHeight()];
+        int [] rowWidths  = new int[bitmap.getHeight()];
 
         // Map all of the pixels
         Map <Integer, List<Integer>> pixels = new HashMap<>();
         this.mapPixels(rowWidths, pixels);
 
         // Determine which feature class the character falls under
-        boolean disconnect = this.isDisconnect(rowWidths);
-        boolean intersect  = this.isIntersect(rowWidths);
-        boolean openRight  = this.hasOpenRightSide(pixels);
-        boolean openTop    = this.hasOpenTop(pixels);
-        boolean openBottom = this.hasOpenBottom(pixels);
+        boolean disconnect    = this.isDisconnect(rowWidths);
+        boolean intersect     = this.isIntersect(rowWidths);
+        boolean openRight     = this.hasOpenRightSide(pixels);
+        boolean openTop       = this.hasOpenTop(pixels);
+        boolean openBottom    = this.hasOpenBottom(pixels);
         boolean enclosedSpace = this.hasEnclosedSpace(pixels);
 
         // Assign feature class accordingly
@@ -206,140 +216,185 @@ public class Character {
      * @return True if the character contains enclosed whitespace
      */
     private boolean hasEnclosedSpace(Map<Integer, List<Integer>> pixels) {
+        // Use this list of coordinates to keep track of our position in the bitmap
+        List<String> coordinates;
+
+        // The outer-most loop is to help us find our starting point
         for (int y = 0; y < pixels.size(); ++y) {
             for (int x = 0; x < pixels.get(0).size(); ++x) {
-                // So that we don't go out of bounds
+
+                // White pixel with a black pixel above (three in a row)
                 if (y < 1 || x  >= pixels.get(0).size() - 2)
                     break;
 
-                // White pixel with a black pixel above (three in a row)
                 if (pixels.get(y).get(x)     == 0 && pixels.get(y - 1).get(x)     == 1 &&
                     pixels.get(y).get(x + 1) == 0 && pixels.get(y - 1).get(x + 1) == 1 &&
                     pixels.get(y).get(x + 2) == 0 && pixels.get(y - 1).get(x + 2) == 1) {
 
+                    coordinates = new ArrayList<>();
+
                     // Iterate to the right as far as we can
-                    while (x < pixels.get(0).size() - 1  &&
-                           y < pixels.size()        - 1  &&
-                           pixels.get(y).get(x)     == 0) {
+                    //                 .
+                    //.................;;.
+                    //::::::::::::::::;;;;.
+                    //::::::::::::::::::;;:'
+                    //                 :'
+                    //
+                    while (x < pixels.get(0).size() - 1  && y < pixels.size() - 1  && pixels.get(y).get(x) == 0) {
 
+                        // Move down if need be
+                        while (pixels.get(y).get(x) == 0 && pixels.get(y).get(x + 1) == 1 && y < pixels.size() - 1) {
+                            pixels.get(y).set(x, 2);
+//                            if (coordinates.contains(x + ":" +y)) {
+//                                return true;
+//                            }
+                            coordinates.add(x + ":" + y);
+                            y++;
+                            if (outOfBounds(pixels, x, y))
+                                return false;
+                        }
+
+                        // Move to the right
                         pixels.get(y).set(x, 3);
-                        if (pixels.get(y).get(x + 1) != 1)
-                            ++x;
+//                        if (coordinates.contains(x + ":" +y))
+//                            return true;
 
-                        // If we run into a black pixel, move down
-                        if (y < pixels.size() - 1        &&
-                            x < pixels.get(0).size() - 1 &&
-                            pixels.get(y).get(x + 1) == 1 ) {
+                        coordinates.add(x + ":" + y);
+                        x++;
+                        if (outOfBounds(pixels, x, y))
+                            return false;
 
-                            pixels.get(y).set(x, 4);
-                            if (pixels.get(y + 1).get(x) != 1)
-                                ++y;
+                        if (pixels.get(y).get(x) == 1) {
+                            x--;
+                            pixels.get(y).set(x, 0);
+                            break;
                         }
                     }
 
                     // Iterate down as far as we can
-                    while (y < pixels.size() - 1 && pixels.get(y).get(x) == 0) {
-                        pixels.get(y).set(x,5);
-                        ++y;
+                    //   ;;;;;
+                    //   ;;;;;
+                    //   ;;;;;
+                    //   ;;;;;
+                    //   ;;;;;
+                    // ..;;;;;..
+                    //  ':::::'
+                    //    ':`
+                    //
+                    while (x >= 0  && y < pixels.size() - 1  && pixels.get(y).get(x) == 0) {
 
-                        // If we run into a black pixel, move to the left
-                        if (x < pixels.get(0).size() - 1 && pixels.get(y).get(x) == 1) {
-                            --x;
-                            pixels.get(y).set(x,5);
+                        // Move to the left if need be
+                        while (pixels.get(y).get(x) == 0 && pixels.get(y + 1).get(x) == 1 && x > 0) {
+                            pixels.get(y).set(x, 4);
+
+                            coordinates.add(x + ":" + y);
+                            x--;
+
+                            if (outOfBounds(pixels, x, y))
+                                return false;
+                        }
+
+                        // Move down
+                        pixels.get(y).set(x, 5);
+
+                        coordinates.add(x + ":" + y);
+                        y++;
+
+                        if (outOfBounds(pixels, x, y))
+                            return false;
+
+                        if (pixels.get(y).get(x) == 1) {
+                            y--;
+                            pixels.get(y).set(x, 0);
+                            break;
+                        }
+                    }
+
+                    // Iterate left as far as we can
+                    //     .
+                    //   .;;..................
+                    // .;;;;::::::::::::::::::
+                    //  ':;;::::::::::::::::::
+                    //    ':
+                    //
+                    while (x > 0  && y > 0 && pixels.get(y).get(x) == 0) {
+
+                        // Move up if need be
+                        while (pixels.get(y).get(x) == 0 && pixels.get(y).get(x - 1) == 1 && y > 0) {
+                            pixels.get(y).set(x, 6);
+
+                            coordinates.add(x + ":" + y);
+                            y--;
+                            if (outOfBounds(pixels, x, y))
+                                return false;
+                        }
+
+                        // Move to the left
+                        pixels.get(y).set(x, 7);
+
+                        coordinates.add(x + ":" + y);
+                        x--;
+                        if (outOfBounds(pixels, x, y))
+                            return false;
+
+                        if (pixels.get(y).get(x) == 1) {
+                            x++;
+                            pixels.get(y).set(x, 0);
+                            break;
+                        }
+                    }
+
+                    // Iterate up as far as we can
+                    //      .
+                    //    .:;:.
+                    //  .:;;;;;:.
+                    //    ;;;;;
+                    //    ;;;;;
+                    //    ;;;;;
+                    //    ;;;;;
+                    //    ;;;;;
+                    //
+                    while (x < pixels.get(0).size() && y > 0 && pixels.get(y).get(x) == 0) {
+
+                        // Move to the right if need be
+                        while (pixels.get(y).get(x) == 0 && pixels.get(y - 1).get(x) == 1 && x < pixels.get(0).size() - 1) {
+
+                            pixels.get(y).set(x, 8);
+                            if (coordinates.contains(x + ":" + y)) {
+                                Log.e(LOG_TAG, "Looped all the way around!");
+                                display(pixels);
+                                return true;
+                            }
+                            coordinates.add(x + ":" + y);
+                            x++;
+                            if (outOfBounds(pixels, x, y))
+                                return false;
+                        }
+
+                        // Move up
+                        pixels.get(y).set(x, 9);
+                        if (coordinates.contains(x + ":" + y)) {
+                            Log.e(LOG_TAG, "Looped all the way around!");
+                            display(pixels);
+                            return true;
+                        }
+                        coordinates.add(x + ":" + y);
+                        y--;
+                        if (outOfBounds(pixels, x, y))
+                            return false;
+
+                        if (pixels.get(y).get(x) == 1) {
+                            y++;
+                            pixels.get(y).set(x, 0);
+                            break;
                         }
                     }
                 }
             }
         }
-        display(pixels);
 
         return false;
     }
-//    private boolean hasEnclosedSpace(Map<Integer, List<Integer>> pixels) {
-//        int [] columnPositions = new int[3];
-//        int [] rowPositions    = new int[3];
-//
-//        int thirdOfColumn   = pixels.size() / 3;
-//        int middleOfColumn  = pixels.size() / 2;
-//        int twoThirdsColumn = (int)(pixels.size() * (2.0f/3.0f));
-//        int thirdOfRow      = pixels.get(0).size() / 3;
-//        int middleOfRow     = pixels.get(0).size() / 2;
-//        int twoThirdsRow    = (int)(pixels.get(0).size() * (2.0f/3.0f));
-//
-//        columnPositions[0] = thirdOfColumn;
-//        columnPositions[1] = middleOfColumn;
-//        columnPositions[2] = twoThirdsColumn;
-//        rowPositions[0]    = thirdOfRow;
-//        rowPositions[1]    = middleOfRow;
-//        rowPositions[2]    = twoThirdsRow;
-//
-//
-//        int numPossibilities = 0;
-//
-//        for (int i = 0; i < columnPositions.length; ++i) {
-//            for (int j = 0; j < rowPositions.length; ++j) {
-//                // Only evaluate characters where we start in open space
-//                if (pixels.get(columnPositions[i]).get(rowPositions[j]) != 0)
-//                    continue;
-//
-//                boolean pathToTop    = true;
-//                boolean pathToBottom = true;
-//                boolean pathToRight  = true;
-//                boolean pathToLeft   = true;
-//
-//                // Can we make it to the top of the bitmap?
-//                for (int k = columnPositions[i]; k >= 0; --k) {
-//                    if (pixels.get(k).get(rowPositions[j]) == 1) {
-//                        pathToTop = false;
-//                        break;
-//                    }
-//                    if (DEBUG)
-//                        pixels.get(k).set(rowPositions[j], 2);
-//                }
-//
-//                // Can we make it to the bottom of the bitmap?
-//                for (int k = columnPositions[i]; k < pixels.size(); ++k) {
-//                    if (pixels.get(k).get(rowPositions[j]) == 1) {
-//                        pathToBottom = false;
-//                        break;
-//                    }
-//                    if (DEBUG)
-//                        pixels.get(k).set(rowPositions[j], 3);
-//                }
-//
-//                // Can we make it to the right side of the bitmap?
-//                for (int k = rowPositions[i]; k < pixels.get(0).size(); ++k) {
-//                    if (pixels.get(columnPositions[j]).get(k) == 1) {
-//                        pathToRight = false;
-//                        break;
-//                    }
-//                    if (DEBUG)
-//                        pixels.get(columnPositions[j]).set(k, 4);
-//                }
-//
-//                // Can we make it to the left side of the bitmap?
-//                for (int k = rowPositions[i]; k >= 0; --k) {
-//                    if (pixels.get(columnPositions[j]).get(k) == 1) {
-//                        pathToLeft = false;
-//                        break;
-//                    }
-//                    if (DEBUG)
-//                        pixels.get(columnPositions[j]).set(k, 5);
-//                }
-//
-//                if (!pathToTop && !pathToBottom && !pathToRight && !pathToLeft)
-//                    numPossibilities++;
-//            }
-//        }
-//
-//        if (numPossibilities < 3)
-//            return false;
-//
-//        if (LOGGING_ENABLED)
-//            display(pixels);
-//
-//        return true;
-//    }
 
     /**
      * Is the character disconnected at any point? The characters that should
