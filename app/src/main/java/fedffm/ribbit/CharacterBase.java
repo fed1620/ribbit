@@ -8,11 +8,26 @@ import android.util.Log;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class CharacterBase {
+    // Folder that contains all character samples
+    private final static String  ASSET_FOLDER = "characters/";
+    private final static String  LOG_TAG      = "CharacterBase";
+    private final static int     FEATURE_TYPE = 0;
+    private final static int     A_ASCII      = 97;
+    private final static int     Z_ASCII      = 122;
+    private final static int     NUM_FILES    = 20;
+    private final static boolean LOGGING_ENABLED          = true;
+    private final static boolean DETAILED_LOGGING_ENABLED = false;
+
+    // The list of known characters
+    private List<Character> characters;
+    private Context context;
+
     // Singleton (so that we only have to instantiate
     // the character base one time
     private static CharacterBase instance = null;
@@ -34,19 +49,6 @@ public class CharacterBase {
         return instance;
     }
 
-    // Folder that contains all character samples
-    private final static String  ASSET_FOLDER = "characters/";
-    private final static String  LOG_TAG      = "CharacterBase";
-    private final static boolean LOGGING_ENABLED = true;
-    private final static int     FEATURE_TYPE = 2;
-    private final static int     A_ASCII      = 97;
-    private final static int     Z_ASCII      = 122;
-    private final static int     NUM_FILES    = 20;
-
-    // The list of known characters
-    private List<Character> characters;
-    private Context context;
-
     /**
      * Store the path to each asset in the list
      * @param directory The parent directory of the assets
@@ -65,6 +67,74 @@ public class CharacterBase {
             }
         }
         return assetPaths;
+    }
+
+    private void balanceFeatureAssignments(List<Integer> featureOccurances) {
+        int numSamples = 0;
+        int count      = 0;
+
+        for (int i = A_ASCII; i <= Z_ASCII; ++i) {
+            List<Integer> features = new ArrayList<>();
+            int featureTypeDefault = 0;
+            int featureType1       = 0;
+            int featureType2       = 0;
+            int featureType3       = 0;
+            int featureType4       = 0;
+            int featureType5       = 0;
+            int featureType6       = 0;
+            int featureType7       = 0;
+            int featureType8       = 0;
+
+            for (int j = 0; j < NUM_FILES; ++j) {
+                switch(featureOccurances.get(numSamples)) {
+                    case 0:
+                        featureTypeDefault++;
+                        break;
+                    case 1:
+                        featureType1++;
+                        break;
+                    case 2:
+                        featureType2++;
+                        break;
+                    case 3:
+                        featureType3++;
+                        break;
+                    case 4:
+                        featureType4++;
+                        break;
+                    case 5:
+                        featureType5++;
+                        break;
+                    case 6:
+                        featureType6++;
+                        break;
+                    case 7:
+                        featureType7++;
+                        break;
+                    case 8:
+                        featureType8++;
+                        break;
+                }
+                numSamples++;
+            }
+
+            features.add(featureTypeDefault);
+            features.add(featureType1);
+            features.add(featureType2);
+            features.add(featureType3);
+            features.add(featureType4);
+            features.add(featureType5);
+            features.add(featureType6);
+            features.add(featureType7);
+            features.add(featureType8);
+
+            int mostCommonFeatureType = Collections.max(features);
+
+            for (int j = 0; j < NUM_FILES; ++j) {
+                this.characters.get(count).setFeatureClass(features.indexOf(mostCommonFeatureType));
+                count++;
+            }
+        }
     }
 
     /**
@@ -87,16 +157,14 @@ public class CharacterBase {
         // Create an input stream
         InputStream inputStream = null;
 
-        Map<java.lang.Character, Integer> featureTypes = new HashMap<>();
         int count = 0;
-
+        Map <Integer, Integer> featureTypes = new HashMap<>();
+        List<Integer> featureOccurances = new ArrayList<>();
         // Load each file referenced in the list of asset paths
         for (int i = 0; i < assetPaths.size(); ++i) {
 
-            // Get the name of the current file
+            // Get the name of the current file and character
             String fileName = assetPaths.get(i);
-
-            // Get the name of the character
             char characterName = fileName.charAt(11);
 
             // Create an inputstream in order to open the asset
@@ -113,23 +181,32 @@ public class CharacterBase {
             character.setAscii((int) characterName);
             addNewCharacter(character);
 
+           featureOccurances.add(character.getFeatureClass());
+
             if (character.getFeatureClass() == FEATURE_TYPE) {
-                if (featureTypes.containsKey(characterName))
+                if (featureTypes.containsKey((int)characterName))
                     count++;
                 else
                     count = 1;
 
-                featureTypes.put(characterName, count);
+                featureTypes.put((int)characterName, count);
             }
         }
-
 
         if (LOGGING_ENABLED) {
             Log.i(LOG_TAG, "Feature type " + FEATURE_TYPE + " characters: ");
-            for (char character : featureTypes.keySet()) {
-                Log.i(LOG_TAG, character + ": " + featureTypes.get(character) + "/20");
+            for (int character : featureTypes.keySet()) {
+                Log.i(LOG_TAG, (char)character + ": " + featureTypes.get(character) + "/20");
             }
+            return;
         }
+
+        this.balanceFeatureAssignments(featureOccurances);
+
+        if (DETAILED_LOGGING_ENABLED)
+            for (int i = 0; i < this.size(); ++i) {
+                Log.i(LOG_TAG, characters.get(i).getName() + ":" + characters.get(i).getFeatureClass());
+            }
     }
 
     /**

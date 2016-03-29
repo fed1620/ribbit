@@ -32,16 +32,17 @@ public class Character {
     public Character(Bitmap bitmap) {
         this.name         = '?';
         this.bitmap       = bitmap;
-        this.featureClass = -1;
+        this.featureClass = 0;
         this.ratioClass   = -1;
         this.determineRatioClass();
         this.determineFeatureClass();
     }
 
     // Setters
-    public  void setName(char name)       {this.name = name;}
-    public  void setAscii(Integer ascii)  {this.ascii = ascii;}
-    public  void setBitmap(Bitmap bitmap) {this.bitmap = bitmap;}
+    public  void setName(char name)                {this.name = name;}
+    public  void setAscii(Integer ascii)           {this.ascii = ascii;}
+    public  void setBitmap(Bitmap bitmap)          {this.bitmap = bitmap;}
+    public  void setFeatureClass(int featureClass) {this.featureClass = featureClass;}
 
     // Getters
     public char    getName()         {return this.name;}
@@ -81,38 +82,33 @@ public class Character {
     /**
      * What are certain attributes of the character?
      *
-     *  0: enclosed space - round
-     *      a, e, o
+     *  0: default
+     *      k, x, s, z, l
      *
-     *  1: enclosed space - pointing up
-     *      b, d
-     *
-     *  2: enclosed space - pointing down
-     *      g, p, q
-     *
-     *  3: disconnect
+     *  1: disconnect
      *      i, j
      *
-     *  4: intersection
+     *  2: intersection
      *      f, t
      *
-     *  5: open top
-     *      u, v, w, y, [k]
-     *
-     *  6: open bottom
-     *      n, h, m
-     *
-     *  7: open right
+     *  3: open right
      *      c, r
      *
-     *  8: 'criss-cross'
-     *      k, x
+     *  4: open top
+     *      u, v, w, y, [k]
      *
-     *  9: diagonalism
-     *      s, z
+     *  5: open bottom
+     *      n, h, m
      *
-     *  10: solid line
-     *      l
+     *  6: enclosed space - round
+     *      a, e, o
+     *
+     *  7: enclosed space - pointing up
+     *      b, d
+     *
+     *  8: enclosed space - pointing down
+     *      g, p, q
+     *
      */
     private void determineFeatureClass() {
         // Use this to record how many black pixels are in each row
@@ -132,21 +128,21 @@ public class Character {
 
         // Assign feature class accordingly
         if (disconnect)
-            this.featureClass = 3;
-        else if (intersect)
-            this.featureClass = 4;
-        else if (openRight)
-            this.featureClass = 7;
-        else if (openTop)
-            this.featureClass = 5;
-        else if (openBottom)
-            this.featureClass = 6;
-        else if (enclosedSpace == 0)
-            this.featureClass = 0;
-        else if (enclosedSpace == 1)
             this.featureClass = 1;
-        else if (enclosedSpace == 2)
+        else if (intersect)
             this.featureClass = 2;
+        else if (openRight)
+            this.featureClass = 3;
+        else if (openTop)
+            this.featureClass = 4;
+        else if (openBottom)
+            this.featureClass = 5;
+        else if (enclosedSpace == 0)
+            this.featureClass = 6;
+        else if (enclosedSpace == 1)     // pointing up
+            this.featureClass = 7;
+        else if (enclosedSpace == 2)     // pointing down
+            this.featureClass = 8;
 
     }
 
@@ -364,7 +360,7 @@ public class Character {
                             if (coordinates.contains(x + ":" + y)) {
                                 if (isPointingUp(pixels))
                                     return 1;
-                                else if (isPointingDown(pixels))
+                                else if (isPointingDown(pixels, y))
                                     return 2;
                                 return 0;
                             }
@@ -381,7 +377,7 @@ public class Character {
                         if (coordinates.contains(x + ":" + y)) {
                             if (isPointingUp(pixels))
                                 return 1;
-                            else if (isPointingDown(pixels))
+                            else if (isPointingDown(pixels, y))
                                 return 2;
                             return 0;
                         }
@@ -447,27 +443,43 @@ public class Character {
      * @param pixels A map of the pixels
      * @return True if the character has a stem that points downward
      */
-    private boolean isPointingDown(Map<Integer, List<Integer>> pixels) {
-        boolean leftSkewed = true;
-        boolean rightSkewed = true;
+    private boolean isPointingDown(Map<Integer, List<Integer>> pixels, int startingPoint) {
 
-        for (int y = (int)(pixels.size() * (3.0f / 4.0f)); y < (int)(pixels.size() * (4.0f/5.0f)); ++y) {
-            for (int x = 0; x < pixels.get(y).size(); ++x) {
-                // Last two-third columns
-                if (x >= (int)(pixels.get(y).size() / 3.0f)) {
-                    if (pixels.get(y).get(x) == 1)
-                        leftSkewed = false;
-                }
-                // First two-third columns
-                else if (x <= (int)(pixels.get(y).size() * (2.0f / 3.0f))) {
-                    if (pixels.get(y).get(x) == 1)
-                        rightSkewed = false;
-                }
+        if (startingPoint >= pixels.size() / 2)
+            return false;
+
+        if (this.getBitmap().getHeight() <= this.getBitmap().getWidth())
+            return false;
+
+        for (int y = startingPoint; y < pixels.size(); ++y) {
+            for (int x = 0; x < pixels.get(y).size() - 1; ++x) {
+                if (pixels.get(y).get(x) == 0 && pixels.get(y).get(x + 1) == 1)
+                    ;
             }
         }
 
-//        display(pixels);
-        return ((leftSkewed && !rightSkewed) || (!leftSkewed && rightSkewed));
+
+        return true;
+//        boolean leftSkewed = true;
+//        boolean rightSkewed = true;
+//
+//        for (int y = (int)(pixels.size() * (3.0f / 4.0f)); y < (int)(pixels.size() * (4.0f/5.0f)); ++y) {
+//            for (int x = 0; x < pixels.get(y).size(); ++x) {
+//                // Last two-third columns
+//                if (x >= (int)(pixels.get(y).size() / 3.0f)) {
+//                    if (pixels.get(y).get(x) == 1)
+//                        leftSkewed = false;
+//                }
+//                // First two-third columns
+//                else if (x <= (int)(pixels.get(y).size() * (2.0f / 3.0f))) {
+//                    if (pixels.get(y).get(x) == 1)
+//                        rightSkewed = false;
+//                }
+//            }
+//        }
+//
+////        display(pixels);
+//        return ((leftSkewed && !rightSkewed) || (!leftSkewed && rightSkewed));
     }
 
     /**
