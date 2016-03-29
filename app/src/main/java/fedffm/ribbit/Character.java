@@ -4,10 +4,6 @@ import android.graphics.Bitmap;
 
 
 public class Character {
-    private static final String  LOG_TAG         = "Character";
-    private static final boolean LOGGING_ENABLED = true;
-    private static final boolean DEBUG           = true;
-
     private char    name;
     private int     ascii;
     private int     ratioClass;
