@@ -21,8 +21,8 @@ public class Character {
     public Character(Bitmap bitmap) {
         this.name         = '?';
         this.bitmap       = bitmap;
-        PreliminaryClassifier.determineRatioClass(this);
-        PreliminaryClassifier.determineFeatureClass(this);
+        Classifier.determineRatioClass(this);
+        Classifier.determineFeatureClass(this);
     }
 
     // Setters

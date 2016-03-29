@@ -9,8 +9,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class PreliminaryClassifier {
-    private static final String LOG_TAG = "PreliminaryClassifier";
+public class Classifier {
+    private static final String LOG_TAG = "Classifier";
     /**
      * Are we in bounds or out of bounds?
      * @param pixels The map of pixels
@@ -30,11 +30,11 @@ public class PreliminaryClassifier {
     public static void determineRatioClass(Character c) {
         float ratio  = (float)c.getBitmap().getWidth() / (float)c.getBitmap().getHeight();
 
-        if (ratio > 0 && ratio < 0.80)
+        if (ratio > 0 && ratio < 0.80)         // The height is greater than the width
             c.setRatioClass(0);
-        else if (ratio > 0.80 && ratio < 1.30)
+        else if (ratio > 0.80 && ratio < 1.30) // The height and width are relatively even
             c.setRatioClass(1);
-        else if (ratio > 1.30)
+        else if (ratio > 1.30)                 // The width is greater than the height
             c.setRatioClass(2);
     }
 
@@ -42,7 +42,7 @@ public class PreliminaryClassifier {
      * What are certain attributes of the character?
      *
      *  0: default
-     *      k, x, s, z, l
+     *      k, x, s, z
      *
      *  1: disconnect
      *      i, j
@@ -68,14 +68,17 @@ public class PreliminaryClassifier {
      *  8: enclosed space - pointing down
      *      g, p, q
      *
+     *  9: line
+     *      l
+     *
      */
-    public static void determineFeatureClass(Character c) {
+    public static void determineFeatureClass(Character character) {
         // Use this to record how many black pixels are in each row
-        int [] rowWidths  = new int[c.getBitmap().getHeight()];
+        int [] rowWidths  = new int[character.getBitmap().getHeight()];
 
         // Map all of the pixels
         Map <Integer, List<Integer>> pixels = new HashMap<>();
-        mapPixels(c.getBitmap(), rowWidths, pixels);
+        mapPixels(character.getBitmap(), rowWidths, pixels);
 
         // Determine which feature class the character falls under
         boolean disconnect    = isDisconnect(rowWidths);
@@ -83,27 +86,32 @@ public class PreliminaryClassifier {
         boolean openRight     = hasOpenRightSide(pixels);
         boolean openTop       = hasOpenTop(pixels);
         boolean openBottom    = hasOpenBottom(pixels);
-        int     enclosedSpace = hasEnclosedSpace(c.getBitmap(), pixels);
+        int     enclosedSpace = hasEnclosedSpace(character.getBitmap(), pixels);
+        boolean isLine        = isLine(pixels);
 
         // Assign feature class accordingly
-        if (disconnect)
-            c.setFeatureClass(1);
-        else if (intersect)
-            c.setFeatureClass(2);
-        else if (openRight)
-            c.setFeatureClass(3);
-        else if (openTop)
-            c.setFeatureClass(4);
-        else if (openBottom)
-            c.setFeatureClass(5);
-        else if (enclosedSpace == 0)
-            c.setFeatureClass(6);
-        else if (enclosedSpace == 1)     // pointing up
-            c.setFeatureClass(7);
-        else if (enclosedSpace == 2)     // pointing down
-            c.setFeatureClass(8);
+        if (disconnect)                          // Disconnect
+            character.setFeatureClass(1);
+        else if (intersect)                      // Intersect
+            character.setFeatureClass(2);
+        else if (openRight)                      // Open right
+            character.setFeatureClass(3);
+        else if (openTop)                        // Open top
+            character.setFeatureClass(4);
+        else if (openBottom)                     // Open bottom
+            character.setFeatureClass(5);
+        else if (enclosedSpace == -1)            // Not enclosed space
+            character.setFeatureClass(0);
+        else if (enclosedSpace == 0)             // Enclosed normal
+            character.setFeatureClass(6);
+        else if (enclosedSpace == 1)             // Enclosed pointing up
+            character.setFeatureClass(7);
+        else if (enclosedSpace == 2)             // Enclosed pointing down
+            character.setFeatureClass(8);
+        else if (isLine)                         // Line
+            character.setFeatureClass(9);
         else
-            c.setFeatureClass(0);        // default
+            character.setFeatureClass(0);        // Default
     }
 
     /**
@@ -141,19 +149,20 @@ public class PreliminaryClassifier {
      */
     private static void display(Map<Integer, List<Integer>> pixels) {
         for (int i = 0; i < pixels.size(); ++i) {
-            // Print out ASCII art for the intersect characters
+            // Append each pixel value to a string (to represent a row of pixels)
             String row = "";
             for (int j = 0; j < pixels.get(i).size(); ++j) {
                 row += pixels.get(i).get(j);
             }
 
+            // Handle single/double digit display for cleaner output
             String rowMarker;
-
             if (i < 10)
                 rowMarker = "row  " + i + ": ";
             else
                 rowMarker = "row " + i + ": ";
 
+            // Output the row of pixels
             Log.i(LOG_TAG, rowMarker + row);
         }
         Log.i(LOG_TAG, "=========================================================================");
@@ -178,9 +187,6 @@ public class PreliminaryClassifier {
      * @return True if the character contains enclosed whitespace
      */
     private static int hasEnclosedSpace(Bitmap bitmap, Map<Integer, List<Integer>> pixels) {
-        // Use this list of coordinates to keep track of our position in the bitmap
-        List<String> coordinates = new ArrayList<>();
-
         // The outer-most loop is to help us find our starting point
         for (int y = 0; y < pixels.size(); ++y) {
             for (int x = 0; x < pixels.get(0).size(); ++x) {
@@ -189,11 +195,14 @@ public class PreliminaryClassifier {
                 if (y < 1 || x  >= pixels.get(0).size() - 2)
                     break;
 
-                if (pixels.get(y).get(x)     == 0 && pixels.get(y - 1).get(x)     == 1 &&
+                // Begin examination when we encounter several white pixels
+                // in a row that have black pixels above them
+                if (pixels.get(y).get(x)         == 0 && pixels.get(y - 1).get(x)     == 1 &&
                         pixels.get(y).get(x + 1) == 0 && pixels.get(y - 1).get(x + 1) == 1 &&
                         pixels.get(y).get(x + 2) == 0 && pixels.get(y - 1).get(x + 2) == 1) {
 
-                    coordinates = new ArrayList<>();
+                    // Use this list of coordinates to keep track of our position in the bitmap
+                    List<String> coordinates = new ArrayList<>();
 
                     // Iterate to the right as far as we can
                     //                 .
@@ -206,7 +215,6 @@ public class PreliminaryClassifier {
 
                         // Move down if need be
                         while (pixels.get(y).get(x) == 0 && pixels.get(y).get(x + 1) == 1 && y < pixels.size() - 1) {
-//                            pixels.get(y).set(x, 2);
                             coordinates.add(x + ":" + y);
                             y++;
 
@@ -215,7 +223,6 @@ public class PreliminaryClassifier {
                         }
 
                         // Move to the right
-//                        pixels.get(y).set(x, 3);
                         coordinates.add(x + ":" + y);
                         x++;
                         if (outOfBounds(pixels, x, y))
@@ -243,7 +250,6 @@ public class PreliminaryClassifier {
 
                         // Move to the left if need be
                         while (pixels.get(y).get(x) == 0 && pixels.get(y + 1).get(x) == 1 && x > 0) {
-//                            pixels.get(y).set(x, 4);
                             coordinates.add(x + ":" + y);
                             x--;
 
@@ -252,7 +258,6 @@ public class PreliminaryClassifier {
                         }
 
                         // Move down
-//                        pixels.get(y).set(x, 5);
                         coordinates.add(x + ":" + y);
                         y++;
 
@@ -278,7 +283,6 @@ public class PreliminaryClassifier {
 
                         // Move up if need be
                         while (pixels.get(y).get(x) == 0 && pixels.get(y).get(x - 1) == 1 && y > 0) {
-//                            pixels.get(y).set(x, 6);
                             coordinates.add(x + ":" + y);
                             y--;
 
@@ -287,7 +291,6 @@ public class PreliminaryClassifier {
                         }
 
                         // Move to the left
-//                        pixels.get(y).set(x, 7);
                         coordinates.add(x + ":" + y);
                         x--;
 
@@ -317,7 +320,6 @@ public class PreliminaryClassifier {
                         // Move to the right if need be
                         while (pixels.get(y).get(x) == 0 && pixels.get(y - 1).get(x) == 1 && x < pixels.get(0).size() - 1) {
 
-//                            pixels.get(y).set(x, 8);
                             if (coordinates.contains(x + ":" + y)) {
                                 if (isPointingUp(pixels))
                                     return 1;
@@ -334,7 +336,6 @@ public class PreliminaryClassifier {
                         }
 
                         // Move up
-//                        pixels.get(y).set(x, 9);
                         if (coordinates.contains(x + ":" + y)) {
                             if (isPointingUp(pixels))
                                 return 1;
@@ -348,12 +349,6 @@ public class PreliminaryClassifier {
 
                         if (outOfBounds(pixels, x, y))
                             return -1;
-
-//                        if (pixels.get(y).get(x) == 1) {
-//                            y++;
-//                            pixels.get(y).set(x, 0);
-//                            break;
-//                        }
                     }
                 }
             }
@@ -392,6 +387,7 @@ public class PreliminaryClassifier {
                 }
             }
         }
+        // Characters should only have pixels on one side of the bitmap
         return ((leftSkewed && !rightSkewed) || (!leftSkewed && rightSkewed));
     }
 
@@ -412,35 +408,9 @@ public class PreliminaryClassifier {
         if (bitmap.getHeight() <= bitmap.getWidth())
             return false;
 
-        for (int y = startingPoint; y < pixels.size(); ++y) {
-            for (int x = 0; x < pixels.get(y).size() - 1; ++x) {
-                if (pixels.get(y).get(x) == 0 && pixels.get(y).get(x + 1) == 1)
-                    ;
-            }
-        }
-
+        // TODO: Loop through map for further filtering / refining
 
         return true;
-//        boolean leftSkewed = true;
-//        boolean rightSkewed = true;
-//
-//        for (int y = (int)(pixels.size() * (3.0f / 4.0f)); y < (int)(pixels.size() * (4.0f/5.0f)); ++y) {
-//            for (int x = 0; x < pixels.get(y).size(); ++x) {
-//                // Last two-third columns
-//                if (x >= (int)(pixels.get(y).size() / 3.0f)) {
-//                    if (pixels.get(y).get(x) == 1)
-//                        leftSkewed = false;
-//                }
-//                // First two-third columns
-//                else if (x <= (int)(pixels.get(y).size() * (2.0f / 3.0f))) {
-//                    if (pixels.get(y).get(x) == 1)
-//                        rightSkewed = false;
-//                }
-//            }
-//        }
-//
-////        display(pixels);
-//        return ((leftSkewed && !rightSkewed) || (!leftSkewed && rightSkewed));
     }
 
     /**
@@ -454,6 +424,8 @@ public class PreliminaryClassifier {
      */
     private static boolean isDisconnect(int [] rowWidths) {
         for (int rowWidth : rowWidths)
+            // Only disconnect characters should have a row
+            // without any pixels
             if (rowWidth == 0)
                 return true;
         return false;
@@ -484,7 +456,6 @@ public class PreliminaryClassifier {
                     numSuddenChanges++;
                 }
             }
-
 
             // Is the current row unusually "wide" or not?
             if (i < 12 || i > rowWidths.length - 13)
@@ -777,5 +748,33 @@ public class PreliminaryClassifier {
         }
 
         return !(!upperThirdIsLeftSkewed || !middleIsLeftSkewed || !lowerThirdIsLeftSkewed);
+    }
+
+    /**
+     * Does the character consist of a single line? The character that
+     * should meet this criteria is:
+     *      1. l
+     *
+     * @param pixels A map of the bitmap's pixels
+     * @return True if the character is a line
+     */
+    private static boolean isLine(Map<Integer, List<Integer>> pixels) {
+        for (int y = 0; y < pixels.size(); ++y) {
+            int blackSpaceCount = 0;
+
+            for (int x = 0; x < pixels.get(0).size() - 1; ++x) {
+                // If we transition from black to white, it is considered
+                // one new section of black pixels
+                if (pixels.get(y).get(x) == 1 && pixels.get(y).get(x + 1) == 0)
+                    blackSpaceCount++;
+            }
+
+            // If there are multiple sections of black pixels in a row,
+            // (such as with the letter 'o'), then the character cannot be
+            // a straight line
+            if (blackSpaceCount > 1)
+                return false;
+        }
+        return true;
     }
 }
