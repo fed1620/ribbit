@@ -22,6 +22,7 @@ import android.widget.TextView;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -357,66 +358,75 @@ public class MainActivity extends ActionBarActivity {
      * Go to the Process Activity
      */
     private void process() {
-        // Time for each step in the process
-        float timeStart;
-        float timeEnd;
+        try {
 
-        // Convert to greyscale
-        timeStart = System.nanoTime();
-        bitmap = Preprocessor.greyscale(bitmap);
-        timeEnd = System.nanoTime();
-        final float secondsGreyscale = (timeEnd - timeStart) / 1000000000;
 
-        // Binarize
-        timeStart = System.nanoTime();
-        bitmap = Preprocessor.binarize(bitmap);
-        timeEnd = System.nanoTime();
-        final float secondsBinarize = (timeEnd - timeStart) / 1000000000;
+            // Time for each step in the process
+            float timeStart;
+            float timeEnd;
 
-        // Crop
-        timeStart = System.nanoTime();
-        bitmap = Preprocessor.crop(bitmap);
-        timeEnd = System.nanoTime();
-        final float secondsCrop = (timeEnd - timeStart) / 1000000000;
+            // Convert to greyscale
+            timeStart = System.nanoTime();
+            bitmap = Preprocessor.greyscale(bitmap);
+            timeEnd = System.nanoTime();
+            final float secondsGreyscale = (timeEnd - timeStart) / 1000000000;
 
-        // Segment the characters
-        timeStart = System.nanoTime();
-        List<Character> characters = Preprocessor.segmentCharacters(bitmap);
-        timeEnd = System.nanoTime();
-        final float secondsSeg = (timeEnd - timeStart) / 1000000000;
+            // Binarize
+            timeStart = System.nanoTime();
+            bitmap = Preprocessor.binarize(bitmap);
+            timeEnd = System.nanoTime();
+            final float secondsBinarize = (timeEnd - timeStart) / 1000000000;
 
-        // Identify
-        timeStart = System.nanoTime();
-        final String word = Identifier.identify(new Word(characters), this);
-        timeEnd = System.nanoTime();
-        final float secondsId = (timeEnd - timeStart) / 1000000000;
+            // Crop
+            timeStart = System.nanoTime();
+            bitmap = Preprocessor.crop(bitmap);
+            timeEnd = System.nanoTime();
+            final float secondsCrop = (timeEnd - timeStart) / 1000000000;
 
-        // Total
-        final float secondsTotal = secondsGreyscale + secondsBinarize + secondsCrop + secondsSeg + secondsId;
+            // Segment the characters
+            timeStart = System.nanoTime();
+            List<Character> characters = Preprocessor.segmentCharacters(bitmap);
+            timeEnd = System.nanoTime();
+            final float secondsSeg = (timeEnd - timeStart) / 1000000000;
 
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-            // Display each time
-            greyscale.setText("greyscale conversion");
-            binarize.setText("binarization");
-            crop.setText("cropping");
-            segment.setText("segmentation");
-            identify.setText("identification");
-            total.setText("total");
-            timeGreyscale.setText(String.format("%.2f", secondsGreyscale) + "s");
-            timeBinarize.setText(String.format("%.2f" , secondsBinarize)  + "s");
-            timeCrop.setText(String.format("%.2f"     , secondsCrop)      + "s");
-            timeSegment.setText(String.format("%.2f"  , secondsSeg)       + "s");
-            timeIdentify.setText(String.format("%.2f" , secondsId)        + "s");
-            timeTotal.setText(String.format("%.2f"    , secondsTotal)     + "s");
+            // Identify
+            timeStart = System.nanoTime();
+            final String word = Identifier.identify(new Word(characters), this);
+            timeEnd = System.nanoTime();
+            final float secondsId = (timeEnd - timeStart) / 1000000000;
 
-            // Display the word
-            textBox.setText(word);
-            textBox.setVisibility(View.VISIBLE);
-            textBox.setSelection(textBox.getText().length());
-            }
-        });
+            // Total
+            final float secondsTotal = secondsGreyscale + secondsBinarize + secondsCrop + secondsSeg + secondsId;
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    // Display each time
+                    greyscale.setText("greyscale conversion");
+                    binarize.setText("binarization");
+                    crop.setText("cropping");
+                    segment.setText("segmentation");
+                    identify.setText("identification");
+                    total.setText("total");
+                    timeGreyscale.setText(String.format("%.2f", secondsGreyscale) + "s");
+                    timeBinarize.setText(String.format("%.2f", secondsBinarize) + "s");
+                    timeCrop.setText(String.format("%.2f", secondsCrop) + "s");
+                    timeSegment.setText(String.format("%.2f", secondsSeg) + "s");
+                    timeIdentify.setText(String.format("%.2f", secondsId) + "s");
+                    timeTotal.setText(String.format("%.2f", secondsTotal) + "s");
+
+                    // Display the word
+                    textBox.setText(word);
+                    textBox.setVisibility(View.VISIBLE);
+                    textBox.setSelection(textBox.getText().length());
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+            instructions.setText("there was a problem with the image\nplease try taking another picture");
+            instructions.setVisibility(View.VISIBLE);
+            cameraButton.setVisibility(View.VISIBLE);
+        }
     }
 
     /**

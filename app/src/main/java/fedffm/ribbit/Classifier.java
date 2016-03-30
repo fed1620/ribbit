@@ -100,8 +100,6 @@ public class Classifier {
             character.setFeatureClass(4);
         else if (openBottom)                     // Open bottom
             character.setFeatureClass(5);
-        else if (enclosedSpace == -1)            // Not enclosed space
-            character.setFeatureClass(0);
         else if (enclosedSpace == 0)             // Enclosed normal
             character.setFeatureClass(6);
         else if (enclosedSpace == 1)             // Enclosed pointing up
@@ -321,7 +319,7 @@ public class Classifier {
                         while (pixels.get(y).get(x) == 0 && pixels.get(y - 1).get(x) == 1 && x < pixels.get(0).size() - 1) {
 
                             if (coordinates.contains(x + ":" + y)) {
-                                if (isPointingUp(pixels))
+                                if (isPointingUp(pixels, y))
                                     return 1;
                                 else if (isPointingDown(bitmap, pixels, y))
                                     return 2;
@@ -337,7 +335,7 @@ public class Classifier {
 
                         // Move up
                         if (coordinates.contains(x + ":" + y)) {
-                            if (isPointingUp(pixels))
+                            if (isPointingUp(pixels, y))
                                 return 1;
                             else if (isPointingDown(bitmap, pixels, y))
                                 return 2;
@@ -365,14 +363,14 @@ public class Classifier {
      * @param pixels A map of the pixels
      * @return True if the character has a stem that points upward
      */
-    private static boolean isPointingUp(Map<Integer, List<Integer>> pixels) {
+    private static boolean isPointingUp(Map<Integer, List<Integer>> pixels, int startingPoint) {
         boolean leftSkewed = true;
         boolean rightSkewed = true;
 
-        for (int y = 0; y < pixels.size(); ++y) {
+        for (int y = 0; y < startingPoint; ++y) {
             for (int x = 0; x < pixels.get(y).size(); ++x) {
                 // First fifth rows
-                if (y <= pixels.get(y).size() / 5) {
+                if (y <= (int)(pixels.get(y).size() / 5.0f)) {
 
                     // Last two-third columns
                     if (x >= pixels.get(y).size() / 3) {
@@ -402,15 +400,24 @@ public class Classifier {
      */
     private static boolean isPointingDown(Bitmap bitmap, Map<Integer, List<Integer>> pixels, int startingPoint) {
 
-        if (startingPoint >= pixels.size() / 2)
+        // Rule out any characters that are too average or wide
+        // as well as any characters where the area of enclosed
+        // space begins too far down the bitmap
+        if (bitmap.getHeight() <= bitmap.getWidth() || startingPoint >= (int)(pixels.size() / 1.75f))
             return false;
 
-        if (bitmap.getHeight() <= bitmap.getWidth())
-            return false;
-
-        // TODO: Loop through map for further filtering / refining
-
-        return true;
+        // Examine the row that is 2/3 of the way down the bitmap
+        // Find the pixel that is furthest to the right
+        int rightmostPixel = pixels.get(0).size();
+        for (int x = pixels.get(0).size() -1; x >= 0; --x) {
+            if (pixels.get((int)(pixels.size() * (2.0f/3.0f))).get(x) == 1) {
+                rightmostPixel = x;
+                break;
+            }
+        }
+        // Rule out characters where the rightmost pixel is
+        // too close to the left edge of the bitmap
+        return (rightmostPixel > pixels.get(0).size() / 6);
     }
 
     /**

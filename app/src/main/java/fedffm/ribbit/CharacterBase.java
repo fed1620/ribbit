@@ -17,12 +17,13 @@ public class CharacterBase {
     // Folder that contains all character samples
     private final static String  ASSET_FOLDER = "characters/";
     private final static String  LOG_TAG      = "CharacterBase";
-    private final static int     FEATURE_TYPE = 0;
+    private final static int     FEATURE_TYPE = 8;
     private final static int     A_ASCII      = 97;
     private final static int     Z_ASCII      = 122;
     private final static int     NUM_FILES    = 20;
-    private final static boolean LOGGING_ENABLED          = true;
-    private final static boolean DETAILED_LOGGING_ENABLED = false;
+    private final static boolean BALANCE_FEATURES = true;
+    private final static boolean LOGGING_ENABLED  = false;
+    private final static boolean DETAILED_LOGGING_ENABLED  = false;
 
     // The list of known characters
     private List<Character> characters;
@@ -84,6 +85,7 @@ public class CharacterBase {
             int featureType6       = 0;
             int featureType7       = 0;
             int featureType8       = 0;
+            int featureType9       = 0;
 
             for (int j = 0; j < NUM_FILES; ++j) {
                 switch(featureOccurances.get(numSamples)) {
@@ -114,6 +116,8 @@ public class CharacterBase {
                     case 8:
                         featureType8++;
                         break;
+                    case 9:
+                        featureType9++;
                 }
                 numSamples++;
             }
@@ -127,6 +131,7 @@ public class CharacterBase {
             features.add(featureType6);
             features.add(featureType7);
             features.add(featureType8);
+            features.add(featureType9);
 
             int mostCommonFeatureType = Collections.max(features);
 
@@ -198,10 +203,10 @@ public class CharacterBase {
             for (int character : featureTypes.keySet()) {
                 Log.i(LOG_TAG, (char)character + ": " + featureTypes.get(character) + "/20");
             }
-            return;
         }
 
-        this.balanceFeatureAssignments(featureOccurances);
+        if (BALANCE_FEATURES)
+            this.balanceFeatureAssignments(featureOccurances);
 
         if (DETAILED_LOGGING_ENABLED)
             for (int i = 0; i < this.size(); ++i) {

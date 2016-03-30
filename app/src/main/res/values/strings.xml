@@ -4,10 +4,10 @@
     <string name="app_name">Ribbit</string>
     <string name="action_settings">Settings</string>
     <string name="image_desc">image which is to be processed for OCR</string>
-    <string name="cameraButton">Start Camera</string>
-    <string name="welcomeMessage">Take a picture to get started!</string>
-    <string name="processButton">Process</string>
-    <string name="retakeButton">Retake</string>
+    <string name="cameraButton">camera</string>
+    <string name="welcomeMessage">take a picture to get started!</string>
+    <string name="processButton">process</string>
+    <string name="retakeButton">retake</string>
     <string name="wait">please wait</string>
 
 </resources>

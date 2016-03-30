@@ -82,7 +82,7 @@ public class Identifier {
             }
 
         // 1.0 == The character pixels of each character are exactly aligned
-        return pixelsMatching / pixelsUnknown;
+        return pixelsMatching / pixelsSample;
     }
 
     /**
@@ -95,10 +95,6 @@ public class Identifier {
         // Similarity measurements
         float dimensionalSimilarity       = dimensionalSimilarity(sample, unknown) * 100;
         float pixelDistributionSimilarity = pixelDistributionSimilarity(sample, unknown) * 100;
-
-        // Apply weights
-//        dimensionalSimilarity       *= .5;
-//        pixelDistributionSimilarity *= .9;
 
         // Combine these values to produce a "similarity score"
         float similarityScore = (dimensionalSimilarity + pixelDistributionSimilarity) / 2;
@@ -114,7 +110,7 @@ public class Identifier {
 
         //   0.0 == the two characters are completely different
         // 100.0 == the two characters are an identical match
-        return similarityScore;
+        return pixelDistributionSimilarity;
     }
 
     /**
@@ -154,8 +150,8 @@ public class Identifier {
             // Iterate through each sample in the list for the current character
             for (int j = 0; j < characterBase.size(); ++j) {
                 // Compare the bitmap of the unknown character against the current sample
-                if (unknown.getRatioClass()   != characterBase.get(j).getRatioClass() ||
-                    unknown.getFeatureClass() != characterBase.get(j).getFeatureClass())
+                if (unknown.getFeatureClass() != characterBase.get(j).getFeatureClass() ||
+                    unknown.getRatioClass() != characterBase.get(j).getRatioClass())
                     continue;
 
                 // Log which character
@@ -216,12 +212,6 @@ public class Identifier {
         // Which was the most commonly occuring measurement?
         int index = iGreatest;
 
-//        if (iGreatest == iGreatestAverage || iGreatest == iGreatestCombined)
-//            index = iGreatest;
-//        else
-//            index = iGreatestCombined;
-
-
         // Set the character name and ascii code
         unknown.setName((char)index);
         unknown.setAscii(index);
@@ -229,11 +219,11 @@ public class Identifier {
         // Log
         if (LOGGING_ENABLED) {
             Log.i(LOG_TAG, "============================================================================");
+            Log.i(LOG_TAG, "character " + unknown.getName() + " was compared against " + totalSampleCount + " samples");
             Log.i(LOG_TAG, "============================================================================");
             Log.i(LOG_TAG, "Greatest similarity:          " + (char)iGreatest + " - " + greatestSimilarity);
             Log.i(LOG_TAG, "Greatest average similarity:  " + (char)iGreatestAverage + " - " + greatestAverage);
             Log.i(LOG_TAG, "Greatest combined similarity: " + (char)iGreatestCombined + " - " + greatestCombined);
-            Log.i(LOG_TAG, "character " + unknown.getName() + " was compared against " + totalSampleCount + " samples");
             Log.i(LOG_TAG, "============================================================================");
             Log.i(LOG_TAG, "============================================================================");
         }

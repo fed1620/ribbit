@@ -16,6 +16,8 @@
         android:visibility="invisible" />
 
     <Button
+        android:background="@drawable/green_button"
+        style="@style/ButtonText"
         android:onClick="launchCamera"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -37,9 +39,12 @@
         android:visibility="visible"
         android:gravity="center"
         android:layout_above="@+id/progressBar"
-        android:layout_centerHorizontal="true" />
+        android:layout_centerHorizontal="true"
+        android:textColor="#646464" />
 
     <Button
+        android:background="@drawable/green_button"
+        style="@style/ButtonText"
         android:onClick="launchCamera"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -54,6 +59,8 @@
         android:layout_marginBottom="25dp" />
 
     <Button
+        android:background="@drawable/green_button"
+        style="@style/ButtonText"
         android:onClick="startProcessing"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
