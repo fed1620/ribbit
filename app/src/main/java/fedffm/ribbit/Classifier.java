@@ -68,7 +68,13 @@ public class Classifier {
      *  8: enclosed space - pointing down
      *      g, p, q
      *
-     *  9: line
+     *      9: g
+     *
+     *      10: p
+     *
+     *      11: q
+     *
+     *  12: line
      *      l
      *
      */
@@ -100,14 +106,20 @@ public class Classifier {
             character.setFeatureClass(4);
         else if (openBottom)                     // Open bottom
             character.setFeatureClass(5);
-        else if (enclosedSpace == 0)             // Enclosed normal
+        else if (enclosedSpace == 6)             // Enclosed normal
             character.setFeatureClass(6);
-        else if (enclosedSpace == 1)             // Enclosed pointing up
+        else if (enclosedSpace == 7)             // Enclosed pointing up
             character.setFeatureClass(7);
-        else if (enclosedSpace == 2)             // Enclosed pointing down
+        else if (enclosedSpace == 8)             // Enclosed pointing down
             character.setFeatureClass(8);
-        else if (isLine)                         // Line
+        else if (enclosedSpace == 9)             // g
             character.setFeatureClass(9);
+        else if (enclosedSpace == 10)            // p
+            character.setFeatureClass(10);
+        else if (enclosedSpace == 11)            // q
+            character.setFeatureClass(11);
+        else if (isLine)                         // Line
+            character.setFeatureClass(12);
         else
             character.setFeatureClass(0);        // Default
     }
@@ -320,10 +332,11 @@ public class Classifier {
 
                             if (coordinates.contains(x + ":" + y)) {
                                 if (isPointingUp(pixels, y))
-                                    return 1;
-                                else if (isPointingDown(bitmap, pixels, y))
-                                    return 2;
-                                return 0;
+                                    return 7;
+                                else if (isPointingDown(bitmap, pixels, y) != -1)
+                                    return isPointingDown(bitmap, pixels, y);
+
+                                return 6;
                             }
                             x++;
                             coordinates.add(x + ":" + y);
@@ -336,10 +349,11 @@ public class Classifier {
                         // Move up
                         if (coordinates.contains(x + ":" + y)) {
                             if (isPointingUp(pixels, y))
-                                return 1;
-                            else if (isPointingDown(bitmap, pixels, y))
-                                return 2;
-                            return 0;
+                                return 7;
+                            else if (isPointingDown(bitmap, pixels, y) != -1)
+                                return isPointingDown(bitmap, pixels, y);
+
+                            return 6;
                         }
                         y--;
                         coordinates.add(x + ":" + y);
@@ -398,13 +412,13 @@ public class Classifier {
      * @param pixels A map of the pixels
      * @return True if the character has a stem that points downward
      */
-    private static boolean isPointingDown(Bitmap bitmap, Map<Integer, List<Integer>> pixels, int startingPoint) {
+    private static int isPointingDown(Bitmap bitmap, Map<Integer, List<Integer>> pixels, int startingPoint) {
 
         // Rule out any characters that are too average or wide
         // as well as any characters where the area of enclosed
         // space begins too far down the bitmap
         if (bitmap.getHeight() <= bitmap.getWidth() || startingPoint >= (int)(pixels.size() / 1.75f))
-            return false;
+            return -1;
 
         // Examine the row that is 2/3 of the way down the bitmap
         // Find the pixel that is furthest to the right
@@ -415,9 +429,50 @@ public class Classifier {
                 break;
             }
         }
+
+        // Examine the last column and find the pixel that is
+        // closest to the bottom of the bitmap
+        int lowestPixelRightEdge = 0;
+        for (int y = 0; y < pixels.size(); ++y) {
+            if (pixels.get(y).get(pixels.get(0).size() - 1) == 1)
+                if (y > lowestPixelRightEdge)
+                    lowestPixelRightEdge = y;
+        }
+
+
+
         // Rule out characters where the rightmost pixel is
         // too close to the left edge of the bitmap
-        return (rightmostPixel > pixels.get(0).size() / 6);
+        // (this is in order to get rid of the letter 'e')
+        if (rightmostPixel <= pixels.get(0).size() / 6) {
+            return -1;
+        }
+
+
+        // If the rightmost pixel is close to the right edge of the bitmap
+        // then the character is probably the letter 'g'
+        else if (rightmostPixel >= (int)(pixels.get(0).size() * (3.0f/4.0f))) {
+            return 9;  // g
+        }
+
+        // If the lowest pixel in the very last column is
+        // more than halfway down the bitmap, then the character
+        // is probably the letter 'q' (because of the tail)
+        else if (lowestPixelRightEdge >= pixels.size() / 2) {
+            return 11;  // q
+        }
+
+        // Otherwise, if the lowest pixel in the last column
+        // is relatively higher up in the bitmap, the letter
+        // is probably a 'p'
+        else if (lowestPixelRightEdge <= pixels.size() / 2) {
+            return 10;  // p
+        }
+
+        // Anything that still identifies as a character with "enclosed
+        // space and a tail pointing down," but didn't fit into
+        // any of the above categories
+        return 8;
     }
 
     /**
